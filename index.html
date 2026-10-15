@@ -1,36 +1,1525 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="description" content="Immersive 3D interactive Earth globe inspired by Snapchat Map, built with CesiumJS and React." />
-    <meta name="theme-color" content="#000000" />
-    <title>Snap Globe 3D • Earth</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #000000;
-        user-select: none;
-        -webkit-user-select: none;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="Agartala Puja Snap — Mobile-first Snapchat Map web app for Durga Puja pandals in Agartala, Tripura.">
+  <meta name="theme-color" content="#0a0a14">
+  <title>Agartala Puja Snap 🪔 • Durga Puja Map</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- EXIF.js library for client-side EXIF GPS extraction from gallery images -->
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            saffron: {
+              DEFAULT: '#FF6B00',
+              50: '#FFF4ED',
+              400: '#FF8833',
+              500: '#FF6B00',
+              600: '#E05A00',
+            },
+            puja: {
+              crimson: '#C0392B',
+              gold: '#F0B429',
+              maroon: '#800020',
+            },
+            snap: {
+              dark: '#0a0a14',
+              surface: '#121224',
+              glass: 'rgba(18, 18, 36, 0.78)',
+            }
+          }
+        }
       }
-      #root {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #000000;
+    }
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #0a0a14;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      position: fixed;
+    }
+
+    /* ── MAP CONTAINER ── */
+    #map {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background-color: #0a0a14;
+    }
+
+    /* Hide default Google Maps watermarks / controls if any leak through */
+    .gm-style-cc, .gmnoprint, a[href^="https://maps.google.com/maps"] {
+      display: none !important;
+    }
+
+    /* ── GLASSMORPHISM ── */
+    .glass-nav {
+      background: rgba(14, 14, 26, 0.72);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* ── SNAP CUSTOM PIN OVERLAY ── */
+    .snap-marker-container {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      cursor: pointer;
+      z-index: 20;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .snap-marker-container:hover, .snap-marker-container:active {
+      transform: translate(-50%, -108%) scale(1.12);
+      z-index: 30;
+    }
+
+    .snap-avatar-ring {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, #FF6B00 0%, #F0B429 50%, #C0392B 100%);
+      box-shadow: 0 6px 20px rgba(255, 107, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2);
+      position: relative;
+      animation: pinDrop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .snap-avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #121224;
+      border: 2px solid #0a0a14;
+    }
+
+    .snap-avatar-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .snap-pin-tail {
+      width: 0;
+      height: 0;
+      margin: -2px auto 0 auto;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 10px solid #FF6B00;
+      filter: drop-shadow(0 3px 4px rgba(255, 107, 0, 0.6));
+    }
+
+    .snap-pin-badge {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #0a0a14;
+      border: 2px solid #FF6B00;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .snap-pulse-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 58px;
+      height: 58px;
+      margin-top: -29px;
+      margin-left: -29px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 107, 0, 0.8);
+      pointer-events: none;
+      animation: radarPulse 2.4s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    }
+
+    /* ── USER LOCATION GPS MARKER (Glowing Blue Dot) ── */
+    .user-gps-marker {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 25;
+    }
+
+    .user-gps-halo {
+      position: absolute;
+      top: -26px;
+      left: -26px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(66, 133, 244, 0.35);
+      animation: userHaloPulse 2.2s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+    }
+
+    .user-gps-dot {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #1a73e8;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6), 0 0 16px rgba(66, 133, 244, 0.9);
+    }
+
+    @keyframes userHaloPulse {
+      0% { transform: scale(0.35); opacity: 0.95; }
+      70% { transform: scale(1.65); opacity: 0.15; }
+      100% { transform: scale(2.3); opacity: 0; }
+    }
+
+    /* ── BOTTOM DRAWER SHEET ── */
+    #bottom-sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      max-height: 75vh;
+      transform: translateY(calc(100% - 94px));
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+      touch-action: pan-y;
+    }
+
+    #bottom-sheet.expanded {
+      transform: translateY(0);
+    }
+
+    /* ── FLOATING CAMERA BUTTON ── */
+    #floating-camera {
+      transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+    }
+
+    #floating-camera:active {
+      transform: scale(0.92);
+    }
+
+    /* ── MODALS ── */
+    .snap-modal-backdrop {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .snap-modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .snap-modal-content {
+      transform: translateY(40px) scale(0.96);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .snap-modal-backdrop.active .snap-modal-content {
+      transform: translateY(0) scale(1);
+    }
+
+    /* ── STORY PROGRESS BAR ── */
+    .story-bar-bg {
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.35);
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .story-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #ffffff;
+      transition: width 5s linear;
+    }
+
+    .story-bar-fill.active {
+      width: 100%;
+    }
+
+    /* ── KEYFRAME ANIMATIONS ── */
+    @keyframes pinDrop {
+      0% { transform: scale(0) translateY(-30px); opacity: 0; }
+      70% { transform: scale(1.15) translateY(4px); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    @keyframes radarPulse {
+      0% { transform: scale(1); opacity: 0.9; }
+      60% { transform: scale(1.85); opacity: 0; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+
+    @keyframes liveBlink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .animate-live-blink {
+      animation: liveBlink 1.8s ease-in-out infinite;
+    }
+
+    /* Custom scrollbar */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-[#0a0a14] text-white">
+
+  <!-- ── 1. MAP VIEWPORT CANVAS ── -->
+  <div id="map"></div>
+
+  <!-- Fallback Canvas if Maps API key is waiting to be configured -->
+  <div id="map-fallback" class="hidden absolute inset-0 z-[2] flex flex-col items-center justify-center p-6 text-center bg-[#0d0d1a]">
+    <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#FF6B00 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <!-- Interactive simulated dark map background -->
+    <div id="sim-markers-container" class="absolute inset-0 pointer-events-auto"></div>
+  </div>
+
+  <!-- ── 2. TOP FLOATING APP BAR ── -->
+  <header class="fixed top-0 left-0 right-0 z-30 px-4 pt-12 pb-3 pointer-events-none">
+    <div class="glass-nav rounded-2xl px-4 py-3 flex items-center justify-between pointer-events-auto shadow-2xl">
+      <!-- Title & Branding -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-saffron to-puja-crimson flex items-center justify-center shadow-lg shadow-saffron/30 flex-shrink-0">
+          <span class="text-xl">🪔</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-white font-bold text-base tracking-tight leading-none">Agartala Puja Snap</h1>
+          </div>
+          <p class="text-white/50 text-xs mt-1">Durga Puja 2026 • Live Map</p>
+        </div>
+      </div>
+
+      <!-- Right Action Badges -->
+      <div class="flex items-center gap-2">
+        <!-- Live Badge -->
+        <div class="flex items-center gap-1.5 bg-saffron/15 border border-saffron/40 px-3 py-1.5 rounded-full">
+          <span class="w-2 h-2 rounded-full bg-saffron animate-live-blink"></span>
+          <span id="live-users-count" class="text-white text-xs font-semibold">142 live</span>
+        </div>
+
+        <!-- Recenter / Locate Button -->
+        <button id="btn-recenter" title="Locate My Position" class="w-9 h-9 rounded-xl glass-card flex items-center justify-center text-white/80 hover:text-white transition active:scale-90">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── 3. FLOATING CAMERA ACTION BUTTON (Bottom Center) ── -->
+  <div class="fixed left-1/2 -translate-x-1/2 bottom-[108px] z-30 flex flex-col items-center gap-1.5 pointer-events-auto">
+    <button id="floating-camera" class="w-16 h-16 rounded-full bg-gradient-to-tr from-saffron via-puja-gold to-puja-crimson flex items-center justify-center shadow-[0_8px_32px_rgba(255,107,0,0.6)] border-4 border-[#0a0a14] active:scale-95 transition-all">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+        <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+        <circle cx="12" cy="13" r="3" fill="white"/>
+      </svg>
+    </button>
+    <span class="text-[11px] font-semibold tracking-wide text-white/80 bg-black/50 px-2.5 py-0.5 rounded-full backdrop-blur-md shadow">
+      Snap Pandal
+    </span>
+  </div>
+
+  <!-- ── 4. SNAPCHAT-STYLE BOTTOM SHEET DRAWER ── -->
+  <div id="bottom-sheet" class="glass-nav rounded-t-[28px] border-t border-white/10 flex flex-col shadow-[0_-12px_40px_rgba(0,0,0,0.7)]">
+    <!-- Drawer Drag Pill -->
+    <div id="drawer-handle" class="w-full pt-3 pb-2 flex justify-center cursor-pointer touch-none">
+      <div class="w-12 h-1.5 rounded-full bg-white/30 hover:bg-white/50 transition"></div>
+    </div>
+
+    <!-- Drawer Header -->
+    <div class="px-5 pb-2.5 flex items-center justify-between border-b border-white/5">
+      <div>
+        <h2 id="drawer-title" class="text-white font-bold text-base leading-tight">Agartala Pandals</h2>
+        <p id="drawer-subtitle" class="text-white/40 text-xs mt-0.5"><span id="pandal-count">5</span> pandals registered</p>
+      </div>
+      <button id="btn-toggle-drawer" class="text-xs font-semibold px-3 py-1.5 rounded-full glass-card text-white/80 hover:text-white">
+        Expand ↑
+      </button>
+    </div>
+
+    <!-- Segmented Tab Navigation: Recent vs Nearby -->
+    <div class="px-4 pt-2.5 pb-1 flex items-center gap-2">
+      <button id="tab-btn-recent" class="flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all bg-saffron text-white shadow-lg shadow-saffron/25 active:scale-98">
+        <span>🔥</span> Recent Snaps
+      </button>
+      <button id="tab-btn-nearby" class="flex-1 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all glass-card text-white/70 hover:text-white active:scale-98">
+        <span>📍</span> Nearby Pandals
+      </button>
+    </div>
+
+    <!-- 1. Recent Snaps Scrollable List -->
+    <div id="recent-snaps-list" class="overflow-y-auto hide-scrollbar px-4 py-2.5 space-y-2 max-h-[50vh]">
+      <!-- Cards dynamically inserted via JS -->
+    </div>
+
+    <!-- 2. Nearby Pandals Scrollable List (Sorted by Proximity) -->
+    <div id="nearby-snaps-list" class="hidden overflow-y-auto hide-scrollbar px-4 py-2.5 space-y-2 max-h-[50vh]">
+      <!-- Nearby proximity cards dynamically inserted via JS -->
+    </div>
+  </div>
+
+  <!-- ── 5. FULL-SCREEN VERTICAL STORY MODAL (Snapchat Style) ── -->
+  <div id="story-modal" class="snap-modal-backdrop fixed inset-0 z-50 bg-black flex flex-col">
+    <!-- Story Background Image -->
+    <img id="story-img" src="" alt="Pandal Story" class="absolute inset-0 w-full h-full object-cover">
+    
+    <!-- Top & Bottom Vignette Gradient -->
+    <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/75 via-transparent to-black/90"></div>
+
+    <!-- Top Overlay (Progress bar & user info) -->
+    <div class="relative z-10 px-4 pt-12 pb-4">
+      <!-- Progress Bar -->
+      <div class="story-bar-bg mb-4">
+        <div id="story-progress-fill" class="story-bar-fill"></div>
+      </div>
+
+      <!-- User Info Header -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img id="story-avatar" src="" alt="Avatar" class="w-10 h-10 rounded-full border-2 border-saffron object-cover shadow-lg">
+          <div>
+            <h3 id="story-uploader" class="text-white font-bold text-sm leading-tight drop-shadow">Priya Saha</h3>
+            <p id="story-time" class="text-white/70 text-xs drop-shadow">14m ago</p>
+          </div>
+        </div>
+        <button id="btn-close-story" class="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition active:scale-90">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Overlay (Pandal details, Likes, Views, Share) -->
+    <div class="relative z-10 mt-auto px-5 pb-12 pt-6">
+      <div class="mb-4">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-saffron/25 border border-saffron/40 mb-2">
+          <span id="story-emoji" class="text-sm">🪔</span>
+          <span id="story-neighborhood" class="text-xs font-semibold text-white">Battala, Agartala</span>
+        </div>
+        <h2 id="story-pandal-title" class="text-white font-extrabold text-2xl drop-shadow-md">Battala Durga Puja</h2>
+      </div>
+
+      <!-- Interactive Actions -->
+      <div class="flex items-center gap-3">
+        <button id="btn-story-like" class="flex-1 py-3 px-4 rounded-2xl glass-card flex items-center justify-center gap-2 text-white font-semibold text-sm active:scale-95 transition">
+          <svg id="story-like-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          <span id="story-likes-count">248</span>
+        </button>
+
+        <div class="py-3 px-4 rounded-2xl glass-card flex items-center gap-2 text-white/80 text-sm">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+          </svg>
+          <span id="story-views-count">1.8k</span>
+        </div>
+
+        <button id="btn-story-share" class="w-12 h-12 rounded-2xl glass-card flex items-center justify-center text-white active:scale-95 transition">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 6. PHOTO UPLOAD MODAL (With Camera & GPS Auto-attach) ── -->
+  <div id="upload-modal" class="snap-modal-backdrop fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex flex-col justify-end sm:justify-center p-0 sm:p-6">
+    <div class="snap-modal-content w-full sm:max-w-md mx-auto bg-[#121224] rounded-t-[32px] sm:rounded-[32px] border border-white/10 p-6 flex flex-col max-h-[90vh] overflow-y-auto hide-scrollbar">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📸</span>
+          <h2 class="text-white font-bold text-lg">Snap Puja Pandal</h2>
+        </div>
+        <button id="btn-close-upload" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white">
+          ✕
+        </button>
+      </div>
+
+      <!-- Step 1: Camera Trigger & Image Preview Area -->
+      <div id="upload-capture-area" class="space-y-4">
+        <!-- Hidden file inputs -->
+        <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
+        <input type="file" id="gallery-input" accept="image/*" class="hidden">
+
+        <!-- Preview Box -->
+        <div id="preview-box" class="w-full h-56 rounded-2xl border-2 border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center relative overflow-hidden group">
+          <div id="placeholder-content" class="text-center p-4">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-saffron to-puja-gold mx-auto flex items-center justify-center mb-3 shadow-lg shadow-saffron/30">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                <circle cx="12" cy="13" r="3" fill="white"/>
+              </svg>
+            </div>
+            <p class="text-white font-semibold text-sm">Snap an idol or pandal</p>
+            <p class="text-white/40 text-xs mt-1">Camera attaches GPS coordinates automatically</p>
+          </div>
+          <img id="upload-preview-img" src="" alt="Upload Preview" class="hidden absolute inset-0 w-full h-full object-cover">
+        </div>
+
+        <!-- Buttons for Camera vs Gallery -->
+        <div class="grid grid-cols-2 gap-3">
+          <button id="btn-trigger-camera" class="py-3 px-4 rounded-xl bg-gradient-to-r from-saffron to-puja-crimson text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-saffron/30 active:scale-95 transition">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+            </svg>
+            Take Photo
+          </button>
+          <button id="btn-trigger-gallery" class="py-3 px-4 rounded-xl glass-card text-white/90 font-semibold text-sm flex items-center justify-center gap-2 hover:text-white active:scale-95 transition">
+            <span>🖼️</span> Gallery
+          </button>
+        </div>
+
+        <!-- GPS Coordinates & Geotag Strategy Indicator -->
+        <div class="glass-card rounded-xl p-3 flex flex-col gap-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span id="gps-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="gps-status-text" class="text-white/90 font-semibold">Acquiring Location...</span>
+            </div>
+            <span id="gps-strategy-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Strategy A</span>
+          </div>
+          <div class="flex items-center justify-between text-white/50 text-[11px]">
+            <span id="gps-method-desc">GPS hardware capture</span>
+            <span id="gps-coords-display" class="text-saffron font-mono font-medium">23.8315° N, 91.2868° E</span>
+          </div>
+        </div>
+
+        <!-- Form Fields -->
+        <div class="space-y-3 pt-1">
+          <div>
+            <label class="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1">Pandal Name *</label>
+            <input id="input-pandal-name" type="text" placeholder="e.g. Ujjayanta Palace Club" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-saffron">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1">Neighborhood</label>
+              <input id="input-neighborhood" type="text" placeholder="e.g. Palace Compound" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-saffron">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1">Your Name</label>
+              <input id="input-uploader" type="text" placeholder="e.g. Rajat" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-saffron">
+            </div>
+          </div>
+        </div>
+
+        <!-- Post Action Button -->
+        <button id="btn-submit-snap" disabled class="w-full py-4 rounded-2xl bg-gradient-to-r from-saffron to-puja-crimson text-white font-extrabold text-base flex items-center justify-center gap-2 shadow-xl shadow-saffron/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition mt-2">
+          <span>🪔</span> Publish to Agartala Map
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 7. TOAST NOTIFICATION ── -->
+  <div id="toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-50 glass-nav px-5 py-2.5 rounded-full text-white text-xs font-semibold shadow-2xl opacity-0 -translate-y-4 pointer-events-none transition-all duration-300 flex items-center gap-2">
+    <span>🪔</span> <span id="toast-msg">Toast message</span>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────────────────────
+       APPLICATION LOGIC & GOOGLE MAPS SETUP
+       ────────────────────────────────────────────────────────────────────────── -->
+  <script>
+    /* ── Initial Seed Data for Agartala Pandals ── */
+    const AGARTALA_CENTER = { lat: 23.8315, lng: 91.2868 };
+
+    let snapsData = [
+      {
+        id: 'p1',
+        pandal: 'Battala Durga Puja',
+        neighborhood: 'Battala',
+        uploader: 'Priya Saha',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Priya&backgroundColor=ffdfbf',
+        imageUrl: '/pandal1.jpg',
+        lat: 23.8361,
+        lng: 91.2812,
+        time: '12m ago',
+        likes: 248,
+        views: '1.8k',
+        emoji: '🪔'
+      },
+      {
+        id: 'p2',
+        pandal: 'Kali Bari Puja Samiti',
+        neighborhood: 'Kali Bari',
+        uploader: 'Riya Das',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Riya&backgroundColor=c0aede',
+        imageUrl: '/images/agartala.jpg',
+        lat: 23.8295,
+        lng: 91.2940,
+        time: '34m ago',
+        likes: 192,
+        views: '940',
+        emoji: '🌺'
+      },
+      {
+        id: 'p3',
+        pandal: 'Ujjayanta Palace Mandap',
+        neighborhood: 'Palace Compound',
+        uploader: 'Ananya Roy',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Ananya&backgroundColor=d1d4f9',
+        imageUrl: '/pandal1.jpg',
+        lat: 23.8350,
+        lng: 91.2880,
+        time: '1h ago',
+        likes: 541,
+        views: '3.2k',
+        emoji: '✨'
+      },
+      {
+        id: 'p4',
+        pandal: 'Motor Stand Puja Committee',
+        neighborhood: 'Krishnanagar',
+        uploader: 'Soham Dey',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Soham&backgroundColor=ffd5dc',
+        imageUrl: '/images/agartala.jpg',
+        lat: 23.8270,
+        lng: 91.2820,
+        time: '2h ago',
+        likes: 104,
+        views: '570',
+        emoji: '🎊'
+      },
+      {
+        id: 'p5',
+        pandal: 'Abhoynagar Sarbojanin',
+        neighborhood: 'Abhoynagar',
+        uploader: 'Debu Paul',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Debu&backgroundColor=b6e3f4',
+        imageUrl: '/pandal1.jpg',
+        lat: 23.8400,
+        lng: 91.2950,
+        time: '4h ago',
+        likes: 315,
+        views: '1.4k',
+        emoji: '🙏'
       }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    ];
+
+    /* ── Dark Mode Map Styling Array for Snapchat aesthetic ── */
+    const DARK_MAP_STYLE = [
+      { elementType: 'geometry', stylers: [{ color: '#0d0d1a' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#0d0d1a' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#6b6b8a' }] },
+      { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#d4d4ff' }] },
+      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+      { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0f1f18', visibility: 'on' }] },
+      { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#3a6b4e' }] },
+      { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
+      { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#212140' }] },
+      { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8888aa' }] },
+      { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#1e1e40' }] },
+      { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#2a2a55' }] },
+      { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#aaaac0' }] },
+      { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#12122a' }] },
+      { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#060614' }] },
+      { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d405b' }] }
+    ];
+
+    let map = null;
+    let customMarkers = [];
+    let currentStoryTimer = null;
+    let userLocation = { ...AGARTALA_CENTER };
+    let capturedPhotoData = null;
+
+    /* ── Show Toast Helper ── */
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      toastMsg.textContent = text;
+      toast.classList.remove('opacity-0', '-translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-4');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2800);
+    }
+
+    let userLiveMarker = null;
+    let currentUserCoords = { ...AGARTALA_CENTER };
+
+    /* ── Haversine Distance Formula (km) ── */
+    function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Earth's mean radius in kilometers
+      const toRad = Math.PI / 180;
+      const dLat = (lat2 - lat1) * toRad;
+      const dLon = (lon2 - lon1) * toRad;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function formatDistance(km) {
+      if (km < 1) {
+        return `${Math.round(km * 1000)} m away`;
+      }
+      return `${km.toFixed(1)} km away`;
+    }
+
+    /* ── Google Maps Initialization Callback ── */
+    window.initMap = function() {
+      try {
+        const mapElement = document.getElementById('map');
+        map = new google.maps.Map(mapElement, {
+          center: AGARTALA_CENTER,
+          zoom: 14,
+          styles: DARK_MAP_STYLE,
+          disableDefaultUI: true, // Disables pegman, zoom buttons, map type
+          zoomControl: false,
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: false,
+          backgroundColor: '#0a0a14',
+          gestureHandling: 'greedy'
+        });
+
+        // Initialize custom HTML OverlayView classes
+        createCustomOverlayClass();
+        createUserLocationOverlayClass();
+        renderAllMapMarkers();
+
+        // ── 1. Auto-Geolocation & Zoom on Startup ──
+        autoDetectUserAndZoom();
+
+        showToast('📍 Live Agartala Durga Puja Map Connected');
+      } catch (err) {
+        console.warn('Google Maps initialized with fallback preview', err);
+        enableMockFallbackMode();
+        autoDetectUserAndZoom();
+      }
+    };
+
+    /* ── Auto-Detect User Location & Zoom on Startup ── */
+    function autoDetectUserAndZoom() {
+      if (!('geolocation' in navigator)) {
+        console.warn('Geolocation not supported, using Agartala center');
+        updateNearbyList();
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userLat = pos.coords.latitude;
+          const userLng = pos.coords.longitude;
+          currentUserCoords = { lat: userLat, lng: userLng };
+          userLocation = { lat: userLat, lng: userLng };
+
+          // Center & Zoom map directly to user's live position
+          if (map) {
+            const userLatLng = new google.maps.LatLng(userLat, userLng);
+            map.setCenter(userLatLng);
+            map.setZoom(15);
+
+            // Place/update user's glowing blue location dot marker
+            if (window.UserLocationOverlay) {
+              if (userLiveMarker) {
+                userLiveMarker.setPosition(userLatLng);
+              } else {
+                userLiveMarker = new window.UserLocationOverlay(userLatLng, map);
+              }
+            }
+          }
+
+          // Populate and sort Nearby Pandals list relative to live coordinates
+          updateNearbyList();
+          showToast('📍 Located you! Zoomed to your position');
+        },
+        (err) => {
+          console.warn('Geolocation denied or unavailable on startup:', err);
+          if (map) {
+            map.setCenter(AGARTALA_CENTER);
+            map.setZoom(14);
+          }
+          updateNearbyList();
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+      );
+    }
+
+    /* ── User Location Overlay Class (Glowing Blue Dot) ── */
+    function createUserLocationOverlayClass() {
+      if (!window.google || !google.maps) return;
+
+      window.UserLocationOverlay = function(latLng, map) {
+        this.latLng = latLng;
+        this.div = null;
+        this.setMap(map);
+      };
+
+      window.UserLocationOverlay.prototype = new google.maps.OverlayView();
+
+      window.UserLocationOverlay.prototype.onAdd = function() {
+        const div = document.createElement('div');
+        div.className = 'user-gps-marker';
+        div.innerHTML = `
+          <div class="user-gps-halo"></div>
+          <div class="user-gps-dot"></div>
+        `;
+        this.div = div;
+        const panes = this.getPanes();
+        panes.overlayMouseTarget.appendChild(div);
+      };
+
+      window.UserLocationOverlay.prototype.draw = function() {
+        const overlayProjection = this.getProjection();
+        if (!overlayProjection || !this.div) return;
+        const point = overlayProjection.fromLatLngToDivPixel(this.latLng);
+        if (point) {
+          this.div.style.left = point.x + 'px';
+          this.div.style.top = point.y + 'px';
+        }
+      };
+
+      window.UserLocationOverlay.prototype.onRemove = function() {
+        if (this.div && this.div.parentNode) {
+          this.div.parentNode.removeChild(this.div);
+          this.div = null;
+        }
+      };
+
+      window.UserLocationOverlay.prototype.setPosition = function(newLatLng) {
+        this.latLng = newLatLng;
+        this.draw();
+      };
+    }
+
+    /* ── Custom HTML Marker OverlayView Class ── */
+    function createCustomOverlayClass() {
+      if (!window.google || !google.maps) return;
+
+      window.SnapOverlayMarker = function(snap, map) {
+        this.snap = snap;
+        this.pos = new google.maps.LatLng(snap.lat, snap.lng);
+        this.div = null;
+        this.setMap(map);
+      };
+
+      window.SnapOverlayMarker.prototype = new google.maps.OverlayView();
+
+      window.SnapOverlayMarker.prototype.onAdd = function() {
+        const div = document.createElement('div');
+        div.className = 'snap-marker-container';
+        div.innerHTML = `
+          <div class="snap-pulse-ring"></div>
+          <div class="snap-avatar-ring">
+            <div class="snap-avatar-inner">
+              <img src="${this.snap.imageUrl}" alt="${this.snap.pandal}" loading="lazy">
+            </div>
+            <div class="snap-pin-badge">${this.snap.emoji}</div>
+          </div>
+          <div class="snap-pin-tail"></div>
+        `;
+
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openStoryModal(this.snap);
+        });
+
+        this.div = div;
+        const panes = this.getPanes();
+        panes.overlayMouseTarget.appendChild(div);
+      };
+
+      window.SnapOverlayMarker.prototype.draw = function() {
+        const overlayProjection = this.getProjection();
+        if (!overlayProjection || !this.div) return;
+        const point = overlayProjection.fromLatLngToDivPixel(this.pos);
+        if (point) {
+          this.div.style.left = point.x + 'px';
+          this.div.style.top = point.y + 'px';
+        }
+      };
+
+      window.SnapOverlayMarker.prototype.onRemove = function() {
+        if (this.div && this.div.parentNode) {
+          this.div.parentNode.removeChild(this.div);
+          this.div = null;
+        }
+      };
+    }
+
+    /* ── Render Snap Pins on Map ── */
+    function renderAllMapMarkers() {
+      // Clear previous markers
+      customMarkers.forEach(m => m.setMap(null));
+      customMarkers = [];
+
+      if (!map || !window.SnapOverlayMarker) {
+        renderSimulatedMarkers();
+        return;
+      }
+
+      snapsData.forEach(snap => {
+        const marker = new window.SnapOverlayMarker(snap, map);
+        customMarkers.push(marker);
+      });
+    }
+
+    /* ── Fallback visual simulation if API key is in placeholder mode ── */
+    function enableMockFallbackMode() {
+      const fallback = document.getElementById('map-fallback');
+      fallback.classList.remove('hidden');
+      renderSimulatedMarkers();
+    }
+
+    function renderSimulatedMarkers() {
+      const container = document.getElementById('sim-markers-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      // Scatter markers visually on Agartala mock canvas
+      const offsets = [
+        { top: '35%', left: '42%' },
+        { top: '58%', left: '60%' },
+        { top: '44%', left: '50%' },
+        { top: '65%', left: '38%' },
+        { top: '28%', left: '65%' },
+        { top: '48%', left: '30%' },
+      ];
+
+      snapsData.forEach((snap, idx) => {
+        const pos = offsets[idx % offsets.length];
+        const el = document.createElement('div');
+        el.className = 'snap-marker-container';
+        el.style.top = pos.top;
+        el.style.left = pos.left;
+        el.innerHTML = `
+          <div class="snap-pulse-ring"></div>
+          <div class="snap-avatar-ring">
+            <div class="snap-avatar-inner">
+              <img src="${snap.imageUrl}" alt="${snap.pandal}">
+            </div>
+            <div class="snap-pin-badge">${snap.emoji}</div>
+          </div>
+          <div class="snap-pin-tail"></div>
+        `;
+        el.addEventListener('click', () => openStoryModal(snap));
+        container.appendChild(el);
+      });
+    }
+
+    // Check if Google Maps failed to load after 2.5s (due to placeholder key) and trigger graceful fallback
+    setTimeout(() => {
+      if (!map) {
+        enableMockFallbackMode();
+      }
+    }, 2500);
+
+    /* ── Render Drawer Lists: Recent vs Nearby ── */
+    const tabBtnRecent = document.getElementById('tab-btn-recent');
+    const tabBtnNearby = document.getElementById('tab-btn-nearby');
+    const recentSnapsList = document.getElementById('recent-snaps-list');
+    const nearbySnapsList = document.getElementById('nearby-snaps-list');
+    const drawerTitle = document.getElementById('drawer-title');
+    const drawerSubtitle = document.getElementById('drawer-subtitle');
+    let activeDrawerTab = 'recent'; // 'recent' | 'nearby'
+
+    function switchDrawerTab(tab) {
+      activeDrawerTab = tab;
+      if (tab === 'recent') {
+        tabBtnRecent.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all bg-saffron text-white shadow-lg shadow-saffron/25 active:scale-98';
+        tabBtnNearby.className = 'flex-1 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all glass-card text-white/70 hover:text-white active:scale-98';
+        recentSnapsList.classList.remove('hidden');
+        nearbySnapsList.classList.add('hidden');
+        drawerTitle.textContent = 'Recent Agartala Snaps';
+        drawerSubtitle.innerHTML = `<span id="pandal-count">${snapsData.length}</span> pandals registered`;
+      } else {
+        tabBtnNearby.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all bg-saffron text-white shadow-lg shadow-saffron/25 active:scale-98';
+        tabBtnRecent.className = 'flex-1 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all glass-card text-white/70 hover:text-white active:scale-98';
+        nearbySnapsList.classList.remove('hidden');
+        recentSnapsList.classList.add('hidden');
+        drawerTitle.textContent = 'Nearby Pandals';
+        drawerSubtitle.textContent = 'Sorted by proximity to your live location';
+        updateNearbyList();
+      }
+    }
+
+    tabBtnRecent.addEventListener('click', () => switchDrawerTab('recent'));
+    tabBtnNearby.addEventListener('click', () => switchDrawerTab('nearby'));
+
+    /* ── 1. Render Recent Snaps (Chronological) ── */
+    function renderRecentSnapsList() {
+      const listEl = document.getElementById('recent-snaps-list');
+      const countEl = document.getElementById('pandal-count');
+      if (countEl) countEl.textContent = snapsData.length;
+      if (!listEl) return;
+
+      listEl.innerHTML = '';
+      snapsData.forEach(snap => {
+        // Calculate proximity for reference
+        const distKm = calculateHaversineDistance(
+          currentUserCoords.lat, currentUserCoords.lng,
+          snap.lat, snap.lng
+        );
+        const distStr = formatDistance(distKm);
+
+        const item = document.createElement('div');
+        item.className = 'glass-card rounded-2xl p-3 flex items-center gap-3.5 cursor-pointer hover:bg-white/10 active:scale-98 transition';
+        item.innerHTML = `
+          <div class="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border-2 border-saffron/60">
+            <img src="${snap.imageUrl}" alt="${snap.pandal}" class="w-full h-full object-cover">
+            <span class="absolute bottom-1 right-1 text-xs">${snap.emoji}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <h4 class="text-white font-bold text-sm truncate">${snap.pandal}</h4>
+              <span class="text-white/40 text-[11px]">${snap.time}</span>
+            </div>
+            <p class="text-white/60 text-xs truncate mt-0.5">${snap.neighborhood} • by ${snap.uploader}</p>
+            <div class="flex items-center gap-3 mt-1 text-[11px] text-white/40">
+              <span class="text-saffron font-medium">📍 ${distStr}</span>
+              <span>❤️ ${snap.likes}</span>
+              <span>👁️ ${snap.views}</span>
+            </div>
+          </div>
+          <button class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40">
+            ➔
+          </button>
+        `;
+
+        item.addEventListener('click', () => {
+          openStoryModal(snap);
+          if (map) {
+            map.panTo({ lat: snap.lat, lng: snap.lng });
+            map.setZoom(16);
+          }
+        });
+
+        listEl.appendChild(item);
+      });
+    }
+
+    /* ── 2. Render Nearby Pandals (Proximity Sorted) ── */
+    function updateNearbyList() {
+      const listEl = document.getElementById('nearby-snaps-list');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      // Calculate Haversine distance and sort ascending
+      const sortedPandals = snapsData.map(snap => {
+        const distKm = calculateHaversineDistance(
+          currentUserCoords.lat, currentUserCoords.lng,
+          snap.lat, snap.lng
+        );
+        return { ...snap, distKm };
+      }).sort((a, b) => a.distKm - b.distKm);
+
+      sortedPandals.forEach(snap => {
+        const distStr = formatDistance(snap.distKm);
+        const item = document.createElement('div');
+        item.className = 'glass-card rounded-2xl p-3 flex flex-col gap-2.5 hover:bg-white/10 transition';
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="pandal-thumb relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border-2 border-puja-gold/70 cursor-pointer">
+              <img src="${snap.imageUrl}" alt="${snap.pandal}" class="w-full h-full object-cover">
+              <span class="absolute bottom-0.5 right-0.5 text-[10px]">${snap.emoji}</span>
+            </div>
+            <div class="pandal-info flex-1 min-w-0 cursor-pointer">
+              <div class="flex items-center justify-between">
+                <h4 class="text-white font-bold text-sm truncate">${snap.pandal}</h4>
+              </div>
+              <p class="text-white/60 text-xs truncate">${snap.neighborhood}</p>
+            </div>
+            <!-- Live Distance Badge -->
+            <div class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold whitespace-nowrap shadow-sm">
+              📍 ${distStr}
+            </div>
+          </div>
+
+          <!-- Action Buttons: Focus on Map + Directions -->
+          <div class="flex items-center gap-2 pt-1 border-t border-white/5">
+            <button class="btn-focus-pandal flex-1 py-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition">
+              <span>🎯 Focus on Map</span>
+            </button>
+            <a href="https://www.google.com/maps/dir/?api=1&origin=${currentUserCoords.lat},${currentUserCoords.lng}&destination=${snap.lat},${snap.lng}" target="_blank" rel="noopener noreferrer" class="py-1.5 px-3 rounded-xl bg-saffron/20 hover:bg-saffron/30 border border-saffron/40 text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition">
+              <span>🗺️ Directions</span>
+            </a>
+          </div>
+        `;
+
+        // Row tap -> Open Story Modal
+        item.querySelector('.pandal-thumb').addEventListener('click', () => openStoryModal(snap));
+        item.querySelector('.pandal-info').addEventListener('click', () => openStoryModal(snap));
+
+        // Focus Button -> Smoothly pans & zooms Google Map to pandal
+        item.querySelector('.btn-focus-pandal').addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (map) {
+            map.panTo({ lat: snap.lat, lng: snap.lng });
+            map.setZoom(17);
+          }
+          // Collapse drawer to reveal map pin
+          bottomSheet.classList.remove('expanded');
+          btnToggleDrawer.textContent = 'Expand ↑';
+          showToast(`🎯 Centered on ${snap.pandal} (${distStr})`);
+        });
+
+        listEl.appendChild(item);
+      });
+    }
+
+    /* ── Fullscreen Story Modal Logic ── */
+    function openStoryModal(snap) {
+      const modal = document.getElementById('story-modal');
+      const storyImg = document.getElementById('story-img');
+      const storyAvatar = document.getElementById('story-avatar');
+      const storyUploader = document.getElementById('story-uploader');
+      const storyTime = document.getElementById('story-time');
+      const storyEmoji = document.getElementById('story-emoji');
+      const storyNeighborhood = document.getElementById('story-neighborhood');
+      const storyPandalTitle = document.getElementById('story-pandal-title');
+      const storyLikesCount = document.getElementById('story-likes-count');
+      const storyViewsCount = document.getElementById('story-views-count');
+      const progressFill = document.getElementById('story-progress-fill');
+
+      storyImg.src = snap.imageUrl;
+      storyAvatar.src = snap.avatar;
+      storyUploader.textContent = snap.uploader;
+      storyTime.textContent = snap.time;
+      storyEmoji.textContent = snap.emoji;
+      storyNeighborhood.textContent = `${snap.neighborhood}, Agartala`;
+      storyPandalTitle.textContent = snap.pandal;
+      storyLikesCount.textContent = snap.likes;
+      storyViewsCount.textContent = snap.views;
+
+      modal.classList.add('active');
+
+      // Animate progress bar (5-second story)
+      progressFill.classList.remove('active');
+      progressFill.style.width = '0%';
+      clearTimeout(currentStoryTimer);
+
+      setTimeout(() => {
+        progressFill.classList.add('active');
+      }, 50);
+
+      currentStoryTimer = setTimeout(() => {
+        closeStoryModal();
+      }, 5100);
+    }
+
+    function closeStoryModal() {
+      const modal = document.getElementById('story-modal');
+      modal.classList.remove('active');
+      clearTimeout(currentStoryTimer);
+    }
+
+    document.getElementById('btn-close-story').addEventListener('click', closeStoryModal);
+
+    // Like Story Button
+    document.getElementById('btn-story-like').addEventListener('click', function() {
+      const countEl = document.getElementById('story-likes-count');
+      const icon = document.getElementById('story-like-icon');
+      let likes = parseInt(countEl.textContent, 10) || 0;
+      likes += 1;
+      countEl.textContent = likes;
+      icon.setAttribute('fill', '#FF6B00');
+      icon.setAttribute('stroke', '#FF6B00');
+      showToast('❤️ Liked pandal story!');
+    });
+
+    // Share Button
+    document.getElementById('btn-story-share').addEventListener('click', () => {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Agartala Puja Snap',
+          text: 'Check out this Durga Puja pandal in Agartala!',
+          url: window.location.href,
+        }).catch(() => {});
+      } else {
+        showToast('🔗 Story link copied to clipboard!');
+      }
+    });
+
+    /* ── Swipeable Bottom Drawer Toggle ── */
+    const bottomSheet = document.getElementById('bottom-sheet');
+    const drawerHandle = document.getElementById('drawer-handle');
+    const btnToggleDrawer = document.getElementById('btn-toggle-drawer');
+
+    function toggleDrawer() {
+      const isExpanded = bottomSheet.classList.contains('expanded');
+      if (isExpanded) {
+        bottomSheet.classList.remove('expanded');
+        btnToggleDrawer.textContent = 'Expand ↑';
+      } else {
+        bottomSheet.classList.add('expanded');
+        btnToggleDrawer.textContent = 'Collapse ↓';
+      }
+    }
+
+    drawerHandle.addEventListener('click', toggleDrawer);
+    btnToggleDrawer.addEventListener('click', toggleDrawer);
+
+    // Touch swipe gesture on mobile
+    let touchStartY = 0;
+    bottomSheet.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    bottomSheet.addEventListener('touchend', (e) => {
+      const touchEndY = e.changedTouches[0].clientY;
+      const diff = touchStartY - touchEndY;
+      if (diff > 45) {
+        bottomSheet.classList.add('expanded');
+        btnToggleDrawer.textContent = 'Collapse ↓';
+      } else if (diff < -45) {
+        bottomSheet.classList.remove('expanded');
+        btnToggleDrawer.textContent = 'Expand ↑';
+      }
+    }, { passive: true });
+
+    /* ── Upload Modal & Camera / Geolocation ── */
+    const uploadModal = document.getElementById('upload-modal');
+    const floatingCamera = document.getElementById('floating-camera');
+    const btnCloseUpload = document.getElementById('btn-close-upload');
+    const btnTriggerCamera = document.getElementById('btn-trigger-camera');
+    const btnTriggerGallery = document.getElementById('btn-trigger-gallery');
+    const cameraInput = document.getElementById('camera-input');
+    const galleryInput = document.getElementById('gallery-input');
+    const uploadPreviewImg = document.getElementById('upload-preview-img');
+    const placeholderContent = document.getElementById('placeholder-content');
+    const btnSubmitSnap = document.getElementById('btn-submit-snap');
+    const inputPandalName = document.getElementById('input-pandal-name');
+    const inputNeighborhood = document.getElementById('input-neighborhood');
+    const inputUploader = document.getElementById('input-uploader');
+    const gpsStatusDot = document.getElementById('gps-status-dot');
+    const gpsStatusText = document.getElementById('gps-status-text');
+    const gpsStrategyBadge = document.getElementById('gps-strategy-badge');
+    const gpsMethodDesc = document.getElementById('gps-method-desc');
+    const gpsCoordsDisplay = document.getElementById('gps-coords-display');
+
+    floatingCamera.addEventListener('click', () => {
+      uploadModal.classList.add('active');
+      // Proactively start acquiring live GPS in background for quick response
+      getLiveGPSLocation()
+        .then(loc => updateGpsUI(loc))
+        .catch(() => updateGpsUI(getFallbackLocation()));
+    });
+
+    btnCloseUpload.addEventListener('click', () => {
+      uploadModal.classList.remove('active');
+    });
+
+    btnTriggerCamera.addEventListener('click', () => cameraInput.click());
+    btnTriggerGallery.addEventListener('click', () => galleryInput.click());
+
+    /* ── STRATEGY A: Live GPS Capture via Geolocation API ── */
+    function getLiveGPSLocation() {
+      return new Promise((resolve, reject) => {
+        if (!('geolocation' in navigator)) {
+          return reject(new Error('Geolocation not supported by device'));
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            resolve({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              strategy: 'Strategy A',
+              badge: 'Live GPS',
+              badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+              dotColor: 'bg-emerald-400',
+              description: 'Precise device GPS hardware',
+            });
+          },
+          (err) => {
+            console.warn('Live GPS error or permission denied:', err);
+            reject(err);
+          },
+          { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
+        );
+      });
+    }
+
+    /* ── STRATEGY B: EXIF Metadata Extraction via exif-js ── */
+    function extractExifLocation(file) {
+      return new Promise((resolve, reject) => {
+        if (!window.EXIF) {
+          return reject(new Error('EXIF.js not loaded'));
+        }
+
+        EXIF.getData(file, function() {
+          try {
+            const lat = EXIF.getTag(this, 'GPSLatitude');
+            const latRef = EXIF.getTag(this, 'GPSLatitudeRef') || 'N';
+            const lng = EXIF.getTag(this, 'GPSLongitude');
+            const lngRef = EXIF.getTag(this, 'GPSLongitudeRef') || 'E';
+
+            if (lat && lng && Array.isArray(lat) && Array.isArray(lng) && lat.length >= 3 && lng.length >= 3) {
+              const latitude = convertDMSToDD(lat[0], lat[1], lat[2], latRef);
+              const longitude = convertDMSToDD(lng[0], lng[1], lng[2], lngRef);
+
+              if (!isNaN(latitude) && !isNaN(longitude) && latitude !== 0 && longitude !== 0) {
+                return resolve({
+                  lat: latitude,
+                  lng: longitude,
+                  strategy: 'Strategy B',
+                  badge: 'EXIF Photo GPS',
+                  badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+                  dotColor: 'bg-sky-400',
+                  description: 'Original camera EXIF metadata',
+                });
+              }
+            }
+            reject(new Error('No valid GPS EXIF metadata found in photo'));
+          } catch (err) {
+            reject(err);
+          }
+        });
+      });
+    }
+
+    /* Convert Degree-Minute-Second GPS coordinates to Decimal Degrees */
+    function convertDMSToDD(degrees, minutes, seconds, direction) {
+      const d = typeof degrees === 'object' && degrees.numerator ? (degrees.numerator / degrees.denominator) : Number(degrees);
+      const m = typeof minutes === 'object' && minutes.numerator ? (minutes.numerator / minutes.denominator) : Number(minutes);
+      const s = typeof seconds === 'object' && seconds.numerator ? (seconds.numerator / seconds.denominator) : Number(seconds);
+      let dd = d + (m / 60) + (s / 3600);
+      if (direction === 'S' || direction === 'W') {
+        dd = dd * -1;
+      }
+      return dd;
+    }
+
+    /* ── STRATEGY C: Default Agartala Center with Randomized Offset ── */
+    function getFallbackLocation() {
+      // Randomized offset to prevent complete marker overlap (~300m - 1km radius)
+      const offsetLat = (Math.random() - 0.5) * 0.018;
+      const offsetLng = (Math.random() - 0.5) * 0.018;
+      return {
+        lat: AGARTALA_CENTER.lat + offsetLat,
+        lng: AGARTALA_CENTER.lng + offsetLng,
+        strategy: 'Strategy C',
+        badge: 'Agartala Fallback',
+        badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+        dotColor: 'bg-amber-400',
+        description: 'Default Agartala center (Randomized offset)',
+      };
+    }
+
+    /* ── Update GPS Info in Upload UI ── */
+    function updateGpsUI(loc) {
+      userLocation = { lat: loc.lat, lng: loc.lng };
+      gpsStatusText.textContent = `${loc.strategy}: ${loc.badge}`;
+      gpsCoordsDisplay.textContent = `${loc.lat.toFixed(4)}° N, ${loc.lng.toFixed(4)}° E`;
+      gpsMethodDesc.textContent = loc.description;
+
+      gpsStatusDot.className = `w-2.5 h-2.5 rounded-full ${loc.dotColor} animate-pulse`;
+      gpsStrategyBadge.className = `px-2 py-0.5 rounded-full text-[10px] font-bold border ${loc.badgeColor}`;
+      gpsStrategyBadge.textContent = loc.badge;
+    }
+
+    /* ── Image Selection & Geotag Orchestration ── */
+    async function processPhotoSelection(file, source) {
+      if (!file) return;
+
+      // 1. Read preview image
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        capturedPhotoData = e.target.result;
+        uploadPreviewImg.src = capturedPhotoData;
+        uploadPreviewImg.classList.remove('hidden');
+        placeholderContent.classList.add('hidden');
+        validateUploadForm();
+      };
+      reader.readAsDataURL(file);
+
+      // 2. Geotagging Strategy Execution
+      gpsStatusText.textContent = 'Analyzing Location...';
+      gpsMethodDesc.textContent = 'Resolving geotag coordinates...';
+
+      if (source === 'camera') {
+        /* Strategy A: Live GPS Capture Primary for Camera Shots */
+        try {
+          const liveLoc = await getLiveGPSLocation();
+          updateGpsUI(liveLoc);
+          showToast('📍 Live GPS coordinates attached');
+        } catch {
+          const fallbackLoc = getFallbackLocation();
+          updateGpsUI(fallbackLoc);
+          showToast('📍 GPS unavailable — Agartala center used');
+        }
+      } else {
+        /* Strategy B: EXIF Metadata Extraction Primary for Gallery Uploads */
+        try {
+          const exifLoc = await extractExifLocation(file);
+          updateGpsUI(exifLoc);
+          showToast('📸 Extracted EXIF GPS from photo');
+        } catch {
+          /* Fallback from Strategy B -> Strategy A (Device GPS) -> Strategy C */
+          try {
+            const liveLoc = await getLiveGPSLocation();
+            updateGpsUI(liveLoc);
+            showToast('📍 No EXIF found — Attached device GPS');
+          } catch {
+            const fallbackLoc = getFallbackLocation();
+            updateGpsUI(fallbackLoc);
+            showToast('📍 No GPS found — Agartala center used');
+          }
+        }
+      }
+    }
+
+    cameraInput.addEventListener('change', (e) => processPhotoSelection(e.target.files[0], 'camera'));
+    galleryInput.addEventListener('change', (e) => processPhotoSelection(e.target.files[0], 'gallery'));
+
+    inputPandalName.addEventListener('input', validateUploadForm);
+
+    function validateUploadForm() {
+      const hasImg = !!capturedPhotoData;
+      const hasName = inputPandalName.value.trim().length > 0;
+      btnSubmitSnap.disabled = !(hasImg && hasName);
+    }
+
+    /* ── Dynamic Map Pin Creation & Instant Feed Sync ── */
+    function addDynamicPinAndSync(newSnap) {
+      // 1. Push new post to local state array
+      snapsData.unshift(newSnap);
+
+      // 2. Dynamically create and render custom HTML marker on Google Map
+      if (map && window.SnapOverlayMarker) {
+        const marker = new window.SnapOverlayMarker(newSnap, map);
+        customMarkers.push(marker);
+
+        // 3. Instantly pan and fly the map view to the newly added pin location
+        map.panTo({ lat: newSnap.lat, lng: newSnap.lng });
+        map.setZoom(16);
+      } else {
+        // Update simulated canvas if active
+        renderSimulatedMarkers();
+      }
+
+      // 4. Simultaneously update both drawer tabs (Recent & Nearby)
+      renderRecentSnapsList();
+      updateNearbyList();
+    }
+
+    /* ── Submit New Snap Post ── */
+    btnSubmitSnap.addEventListener('click', () => {
+      const pandalName = inputPandalName.value.trim();
+      const neighborhood = inputNeighborhood.value.trim() || 'Agartala';
+      const uploader = inputUploader.value.trim() || 'Festive Devotee';
+
+      const newSnap = {
+        id: 'user-' + Date.now(),
+        pandal: pandalName,
+        neighborhood: neighborhood,
+        uploader: uploader,
+        avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(uploader)}&backgroundColor=ffdfbf`,
+        imageUrl: capturedPhotoData || '/pandal1.jpg',
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        time: 'Just now',
+        likes: 1,
+        views: '1',
+        emoji: '🪔'
+      };
+
+      // Execute dynamic pin creation, map flight, and feed sync
+      addDynamicPinAndSync(newSnap);
+
+      // Reset form & close modal
+      uploadModal.classList.remove('active');
+      inputPandalName.value = '';
+      inputNeighborhood.value = '';
+      inputUploader.value = '';
+      capturedPhotoData = null;
+      uploadPreviewImg.src = '';
+      uploadPreviewImg.classList.add('hidden');
+      placeholderContent.classList.remove('hidden');
+      btnSubmitSnap.disabled = true;
+
+      showToast(`🎉 "${pandalName}" dropped onto the map!`);
+    });
+
+    /* ── Recenter Map Button (Pans to Live User Location) ── */
+    document.getElementById('btn-recenter').addEventListener('click', () => {
+      if (map) {
+        map.panTo(currentUserCoords);
+        map.setZoom(15);
+        showToast('📍 Centered on your live position');
+      } else {
+        showToast('📍 Centered on your position');
+      }
+    });
+
+    /* ── Live Viewer Random Simulator ── */
+    setInterval(() => {
+      const countEl = document.getElementById('live-users-count');
+      if (countEl) {
+        const delta = Math.floor(Math.random() * 5) - 2;
+        let count = parseInt(countEl.textContent, 10) || 142;
+        count = Math.max(118, count + delta);
+        countEl.textContent = `${count} live`;
+      }
+    }, 4500);
+
+    /* ── Initial Render ── */
+    renderRecentSnapsList();
+  </script>
+
+  <!-- ── 8. OFFICIAL GOOGLE MAPS JAVASCRIPT API SCRIPT TAG ── -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAnnaozqfYaMR6oUS6ihqkbn1bwXJwcuR0&callback=initMap" async defer></script>
+</body>
 </html>

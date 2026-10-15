@@ -1,4 +1,9 @@
-/* Global reset — nothing else needed, all styles are in App.tsx */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, #root { width: 100%; height: 100%; overflow: hidden; background: #000; }
+/* Global reset & base styles imported by main.tsx */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #app, #root {
+  width: 100%; height: 100%;
+  margin: 0; padding: 0;
+  overflow: hidden;
+  background: #0a0a0f;
+}
 body { user-select: none; -webkit-user-select: none; }
