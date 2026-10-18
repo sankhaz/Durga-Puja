@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 
 /* ─────────────────────────────────────────────────────────────────────────
    Types
@@ -35,6 +35,7 @@ declare global {
   interface Window {
     google: any
     initMap: () => void
+    exifr?: any
   }
 }
 
@@ -43,6 +44,38 @@ declare global {
    ───────────────────────────────────────────────────────────────────────── */
 const AGARTALA_CENTER = { lat: 23.8315, lng: 91.2868 }
 const MAPS_API_KEY = 'AIzaSyAnnaozqfYaMR6oUS6ihqkbn1bwXJwcuR0'
+
+export const AGARTALA_MASTER_PANDALS = [
+  { name: 'Bharat Ratna Sangha', neighborhood: 'Usha Bazar', lat: 23.8820, lng: 91.2785, emoji: '🪔' },
+  { name: 'Ujjayanta Palace Mandap', neighborhood: 'Palace Compound', lat: 23.8350, lng: 91.2880, emoji: '👑' },
+  { name: 'Banamalipur Club & Youth Union', neighborhood: 'Banamalipur', lat: 23.8335, lng: 91.2915, emoji: '🎆' },
+  { name: 'Battala Durga Puja', neighborhood: 'Battala', lat: 23.8361, lng: 91.2812, emoji: '🪔' },
+  { name: 'Dhaleswar Netaji Play Center', neighborhood: 'Dhaleswar', lat: 23.8310, lng: 91.2965, emoji: '🌟' },
+  { name: 'Ramnagar Road No. 2', neighborhood: 'Ramnagar', lat: 23.8430, lng: 91.2840, emoji: '✨' },
+  { name: 'Shanti Para Youth Club', neighborhood: 'Shantipara', lat: 23.8375, lng: 91.2905, emoji: '🎊' },
+  { name: 'Melarmath Sarbajanin Mandap', neighborhood: 'Melarmath', lat: 23.8305, lng: 91.2855, emoji: '🕊️' },
+  { name: 'Kali Bari Puja Samiti', neighborhood: 'Kali Bari', lat: 23.8295, lng: 91.2940, emoji: '🌺' },
+  { name: 'Polestar Club', neighborhood: 'Banamalipur', lat: 23.8368, lng: 91.2932, emoji: '⚡' },
+  { name: 'Deshabandhu Chittaranjan Club', neighborhood: 'Dhaleswar', lat: 23.8285, lng: 91.2985, emoji: '🎺' },
+  { name: 'Aikatan Sangha', neighborhood: 'Kunjaban', lat: 23.8480, lng: 91.2890, emoji: '🪕' },
+  { name: 'Badharghat Sporting Club', neighborhood: 'Badharghat', lat: 23.8120, lng: 91.2740, emoji: '🥁' },
+  { name: 'Pratapgarh Youth Federation', neighborhood: 'Pratapgarh', lat: 23.8210, lng: 91.2895, emoji: '🔥' }
+]
+
+function calcHaversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3
+  const rad = Math.PI / 180
+  const φ1 = lat1 * rad
+  const φ2 = lat2 * rad
+  const Δφ = (lat2 - lat1) * rad
+  const Δλ = (lon2 - lon1) * rad
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))
+}
+
+function fmtDistanceMeters(meters: number): string {
+  return meters < 1000 ? `${meters}m away` : `${(meters / 1000).toFixed(1)}km away`
+}
 
 const AVATARS = [
   'https://api.dicebear.com/7.x/adventurer/svg?seed=priya&backgroundColor=ffdfbf',
@@ -332,54 +365,119 @@ interface UploadModalProps {
   onSubmit: (post: Omit<SnapPost, 'id' | 'likes' | 'views' | 'timestamp'>) => void
 }
 function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }: UploadModalProps) {
-  const fileRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [mediaType, setMediaType] = useState<'image' | 'video'>('image')
   const [pandalName, setPandalName] = useState('')
   const [neighborhood, setNeighborhood] = useState('')
-  const [locating, setLocating] = useState(false)
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
-  const [uploaderName, setUploaderName] = useState('')
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>(AGARTALA_CENTER)
+  const [locationSource, setLocationSource] = useState<'exif' | 'live_gps' | 'city_center' | 'custom'>('live_gps')
+  const [sourceBadge, setSourceBadge] = useState({ text: '📡 Live Device GPS', cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' })
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [searchFilter, setSearchFilter] = useState('')
   const [step, setStep] = useState<'capture' | 'details'>('capture')
   const [submitting, setSubmitting] = useState(false)
 
   const reset = () => {
     setPreview(null); setPandalName(''); setNeighborhood('')
-    setCoords(null); setUploaderName(''); setStep('capture'); setSubmitting(false)
+    setCoords(AGARTALA_CENTER); setStep('capture'); setSubmitting(false)
+    setShowDropdown(false); setSearchFilter('')
   }
 
   const handleClose = () => { reset(); onClose() }
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  // Strategy 4 Waterfall: EXIF -> Live GPS -> City Center
+  const processFileWaterfall = async (file: File) => {
+    const isVid = file.type.startsWith('video')
+    setMediaType(isVid ? 'video' : 'image')
     const url = URL.createObjectURL(file)
     setPreview(url)
     setStep('details')
-    // Auto-get GPS
-    setLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-        setLocating(false)
-      },
-      () => {
-        // fallback: random point near Agartala
-        setCoords({
-          lat: AGARTALA_CENTER.lat + (Math.random() - 0.5) * 0.025,
-          lng: AGARTALA_CENTER.lng + (Math.random() - 0.5) * 0.025,
+
+    let detectedCoords: { lat: number; lng: number } | null = null
+    let detectedSource: 'exif' | 'live_gps' | 'city_center' = 'live_gps'
+
+    // Step 1: EXIF Metadata (for photos)
+    if (!isVid && window.exifr) {
+      try {
+        const gps = await window.exifr.gps(file)
+        if (gps && typeof gps.latitude === 'number' && typeof gps.longitude === 'number' && gps.latitude !== 0) {
+          detectedCoords = { lat: gps.latitude, lng: gps.longitude }
+          detectedSource = 'exif'
+        }
+      } catch (e) {
+        console.warn('EXIF extraction skipped:', e)
+      }
+    }
+
+    // Step 2: Live Device GPS Fallback
+    if (!detectedCoords) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          if (!('geolocation' in navigator)) return reject(new Error('No geolocation'))
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 6000 })
         })
-        setLocating(false)
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    )
+        detectedCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        detectedSource = 'live_gps'
+      } catch {
+        // Step 3: City Center Fallback
+        detectedCoords = {
+          lat: AGARTALA_CENTER.lat + (Math.random() - 0.5) * 0.015,
+          lng: AGARTALA_CENTER.lng + (Math.random() - 0.5) * 0.015,
+        }
+        detectedSource = 'city_center'
+      }
+    }
+
+    setCoords(detectedCoords)
+    setLocationSource(detectedSource)
+    if (detectedSource === 'exif') {
+      setSourceBadge({ text: '📸 Photo EXIF GPS', cls: 'bg-sky-500/20 text-sky-300 border-sky-500/40' })
+    } else if (detectedSource === 'live_gps') {
+      setSourceBadge({ text: '📡 Live Device GPS', cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' })
+    } else {
+      setSourceBadge({ text: '📍 Agartala Center', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' })
+    }
+
+    // Auto-match nearest pandal
+    const sorted = AGARTALA_MASTER_PANDALS.map(p => ({
+      ...p,
+      distance: calcHaversineMeters(detectedCoords!.lat, detectedCoords!.lng, p.lat, p.lng)
+    })).sort((a, b) => a.distance - b.distance)
+
+    if (sorted[0] && sorted[0].distance <= 500) {
+      setPandalName(sorted[0].name)
+      setNeighborhood(sorted[0].neighborhood)
+    }
   }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) processFileWaterfall(file)
+  }
+
+  // Calculate distances to all master pandals relative to current pin
+  const pandalsWithProximity = useMemo(() => {
+    return AGARTALA_MASTER_PANDALS.map(p => {
+      const dist = calcHaversineMeters(coords.lat, coords.lng, p.lat, p.lng)
+      return { ...p, distance: dist, distText: fmtDistanceMeters(dist) }
+    }).sort((a, b) => a.distance - b.distance)
+  }, [coords])
+
+  const nearestPandal = pandalsWithProximity[0]
+  const isAutoMatched = nearestPandal && nearestPandal.distance <= 500
+
+  const filteredPandals = useMemo(() => {
+    const q = (pandalName || searchFilter).trim().toLowerCase()
+    if (!q) return pandalsWithProximity
+    return pandalsWithProximity.filter(p => p.name.toLowerCase().includes(q) || p.neighborhood.toLowerCase().includes(q))
+  }, [pandalsWithProximity, pandalName, searchFilter])
 
   const handleSubmit = () => {
     if (!currentUser) {
       onRequireAuth()
       return
     }
-    if (!preview || !pandalName.trim() || !coords) return
+    if (!preview || !pandalName.trim()) return
     setSubmitting(true)
     setTimeout(() => {
       onSubmit({
@@ -387,7 +485,7 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
         userName: currentUser.displayName,
         userAvatar: currentUser.photoURL,
         mediaUrl: preview,
-        mediaType: 'image',
+        mediaType: mediaType,
         pandal: pandalName.trim(),
         neighborhood: neighborhood.trim() || 'Agartala',
         uploader: currentUser.displayName,
@@ -396,7 +494,7 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
         lat: coords.lat,
         lng: coords.lng,
         coordinates: { lat: coords.lat, lng: coords.lng },
-        emoji: ['🪔', '👑', '🎆', '🥁', '🌟'][Math.floor(Math.random() * 5)],
+        emoji: nearestPandal?.emoji || '🪔',
       })
       reset()
       onClose()
@@ -414,37 +512,30 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
         <button id="upload-back-btn" onClick={handleClose} className="text-white/70 hover:text-white transition-colors">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" /></svg>
         </button>
-        <h2 className="text-white font-bold text-lg">
-          {step === 'capture' ? 'New Puja Snap' : 'Add Details'}
+        <h2 className="text-white font-bold text-base sm:text-lg">
+          {step === 'capture' ? 'Snap & Tag Pandal' : 'Strategy 4: Hybrid Tagging'}
         </h2>
         <div className="w-6" />
       </div>
 
       {step === 'capture' ? (
-        /* Camera capture step */
+        /* Capture step */
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8">
           <div className="w-32 h-32 rounded-3xl flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, rgba(255,107,0,0.2), rgba(192,57,43,0.2))', border: '2px dashed rgba(255,107,0,0.5)' }}>
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
-              <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"
-                fill="url(#camGrad)" />
-              <circle cx="12" cy="13" r="3" fill="url(#camGrad)" />
-              <defs>
-                <linearGradient id="camGrad" x1="2" y1="3" x2="22" y2="21">
-                  <stop stopColor="#FF6B00" /><stop offset="1" stopColor="#F0B429" />
-                </linearGradient>
-              </defs>
-            </svg>
+            <span className="text-5xl">🪔</span>
           </div>
           <div className="text-center">
-            <h3 className="text-white font-bold text-xl mb-2">Capture Your Moment</h3>
-            <p className="text-white/50 text-sm leading-relaxed">Take a photo of the Durga Puja pandal or idol and share it on the live map!</p>
+            <h3 className="text-white font-bold text-xl mb-1">Capture or Upload Snap</h3>
+            <p className="text-white/50 text-xs leading-relaxed max-w-xs">
+              EXIF GPS will be automatically extracted, with background GPS & pandal auto-matching.
+            </p>
           </div>
-          <div className="flex flex-col gap-3 w-full">
+          <div className="flex flex-col gap-3 w-full max-w-xs">
             <label
               htmlFor="snap-camera"
               id="camera-capture-label"
-              className="w-full py-4 rounded-2xl text-center text-white font-bold text-base cursor-pointer transition-all active:scale-95"
+              className="w-full py-3.5 rounded-2xl text-center text-white font-bold text-sm cursor-pointer transition-all active:scale-95"
               style={{ background: 'linear-gradient(135deg, #FF6B00, #C0392B)', boxShadow: '0 8px 32px rgba(255,107,0,0.4)' }}
             >
               📷 Open Camera
@@ -452,135 +543,208 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
             <input
               id="snap-camera"
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               capture="environment"
               style={{ display: 'none' }}
-              onChange={handleFile}
+              onChange={handleFileChange}
             />
             <label
               htmlFor="snap-gallery"
               id="gallery-pick-label"
-              className="w-full py-4 rounded-2xl text-center font-bold text-base cursor-pointer transition-all active:scale-95 glass-light text-white/80"
+              className="w-full py-3.5 rounded-2xl text-center font-bold text-sm cursor-pointer transition-all active:scale-95 glass-light text-white/80"
             >
-              🖼️ Choose from Gallery
+              🖼️ Select from Gallery
             </label>
             <input
               id="snap-gallery"
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               style={{ display: 'none' }}
-              onChange={handleFile}
+              onChange={handleFileChange}
             />
           </div>
         </div>
       ) : (
-        /* Details step */
-        <div className="flex-1 overflow-y-auto no-scrollbar">
-          {/* Preview */}
-          {preview && (
-            <div className="relative mx-5 mt-5 rounded-3xl overflow-hidden" style={{ height: 260 }}>
-              <img src={preview} alt="preview" className="w-full h-full object-cover" />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.6) 100%)' }} />
-              {/* GPS badge */}
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full"
-                style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(10px)' }}>
-                {locating ? (
-                  <div className="w-3 h-3 rounded-full border-2 border-saffron border-t-transparent animate-spin" style={{ borderColor: '#FF6B00', borderTopColor: 'transparent', animation: 'spinLoader 0.8s linear infinite' }} />
-                ) : (
-                  <div className="w-2 h-2 rounded-full" style={{ background: '#4ade80' }} />
-                )}
-                <span className="text-white text-xs font-medium">
-                  {locating ? 'Acquiring GPS…' : coords ? 'Location Tagged • Agartala' : 'Agartala Center'}
-                </span>
+        /* Strategy 4 Confirmation Details */
+        <div className="flex-1 overflow-y-auto no-scrollbar px-5 py-4 space-y-4">
+          {/* Media Preview Box */}
+          <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-white/15 bg-black/40">
+            {mediaType === 'video' ? (
+              <video src={preview!} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+            ) : (
+              <img src={preview!} alt="preview" className="w-full h-full object-cover" />
+            )}
+            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-white/90 border border-white/20">
+              Media Selected
+            </div>
+          </div>
+
+          {/* Location Status Card */}
+          <div className="glass-card rounded-2xl p-3 border border-white/10 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-white text-xs font-bold">{sourceBadge.text}</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${sourceBadge.cls}`}>
+                Waterfall Stage
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-white/50">
+              <span>Coordinates</span>
+              <span className="font-mono text-amber-300 text-[10px]">{coords.lat.toFixed(4)}° N, {coords.lng.toFixed(4)}° E</span>
+            </div>
+          </div>
+
+          {/* Pandal Auto-Match Banner */}
+          {nearestPandal && (
+            <div className={`rounded-xl p-2.5 border flex items-center justify-between ${isAutoMatched ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-base">{isAutoMatched ? '🎉' : '📍'}</span>
+                <div className="min-w-0">
+                  <span className="text-white text-xs font-bold block truncate">
+                    {isAutoMatched ? `Matched with: ${nearestPandal.name}` : `Nearest: ${nearestPandal.name}`}
+                  </span>
+                  <span className={`text-[10px] block ${isAutoMatched ? 'text-emerald-300' : 'text-amber-200/70'}`}>
+                    {nearestPandal.distText} away • {isAutoMatched ? 'Auto-linked' : 'Select from dropdown'}
+                  </span>
+                </div>
               </div>
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${isAutoMatched ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}>
+                {isAutoMatched ? 'Auto-Matched' : 'Suggested'}
+              </span>
             </div>
           )}
 
-          {/* Form */}
-          <div className="px-5 py-5 flex flex-col gap-4">
-            <div>
-              <label className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2 block">Pandal Name *</label>
+          {/* Searchable Pandal Name & Dropdown */}
+          <div className="relative">
+            <label className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-1.5 block">
+              Pandal Name *
+            </label>
+            <div className="relative">
               <input
                 id="pandal-name-input"
                 type="text"
                 value={pandalName}
-                onChange={e => setPandalName(e.target.value)}
-                placeholder="e.g. Battala Durga Puja"
-                maxLength={60}
-                className="w-full py-3.5 px-4 rounded-xl text-white text-sm outline-none focus:ring-2 placeholder-white/30"
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.1)', focusRingColor: '#FF6B00' }}
-                onFocus={e => { e.target.style.borderColor = '#FF6B00' }}
-                onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                onFocus={() => setShowDropdown(true)}
+                onChange={e => { setPandalName(e.target.value); setSearchFilter(e.target.value) }}
+                placeholder="Type or select pandal..."
+                className="w-full py-3 px-3.5 pr-10 rounded-xl text-white text-sm outline-none bg-white/5 border border-white/15 focus:border-amber-400"
               />
+              <button
+                type="button"
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-white/10 text-white/60 flex items-center justify-center text-xs"
+              >
+                ▼
+              </button>
             </div>
-            <div>
-              <label className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2 block">Neighborhood</label>
-              <input
-                id="neighborhood-input"
-                type="text"
-                value={neighborhood}
-                onChange={e => setNeighborhood(e.target.value)}
-                placeholder="e.g. Battala, Krishnanagar"
-                maxLength={40}
-                className="w-full py-3.5 px-4 rounded-xl text-white text-sm outline-none"
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.1)' }}
-                onFocus={e => { e.target.style.borderColor = '#FF6B00' }}
-                onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
-              />
-            </div>
-            {currentUser ? (
-              <div className="flex items-center justify-between p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.1)' }}>
-                <div className="flex items-center gap-2.5">
-                  <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-8 h-8 rounded-full border border-saffron object-cover" />
-                  <div>
-                    <span className="text-[10px] text-white/50 uppercase tracking-wider block">Posting as</span>
-                    <span className="text-white text-xs font-bold block">{currentUser.displayName}</span>
+
+            {/* Proximity Dropdown */}
+            {showDropdown && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 z-40 bg-[#16162a] border border-white/15 rounded-xl shadow-2xl max-h-48 overflow-y-auto no-scrollbar p-1.5 backdrop-blur-xl">
+                {filteredPandals.map(p => (
+                  <div
+                    key={p.name}
+                    onClick={() => {
+                      setPandalName(p.name)
+                      setNeighborhood(p.neighborhood)
+                      setCoords({ lat: p.lat, lng: p.lng })
+                      setLocationSource('custom')
+                      setSourceBadge({ text: '🏛️ Pandal Coordinates', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' })
+                      setShowDropdown(false)
+                    }}
+                    className="p-2 hover:bg-white/10 rounded-lg cursor-pointer flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span>{p.emoji}</span>
+                      <div className="min-w-0">
+                        <span className="text-white text-xs font-bold block truncate">{p.name}</span>
+                        <span className="text-white/40 text-[10px] block truncate">{p.neighborhood}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                      {p.distText}
+                    </span>
                   </div>
-                </div>
-                <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded-full flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Verified ID
-                </span>
-              </div>
-            ) : (
-              <div>
-                <label className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2 block">Your Name</label>
-                <input
-                  id="uploader-name-input"
-                  type="text"
-                  value={uploaderName}
-                  onChange={e => setUploaderName(e.target.value)}
-                  placeholder="Anonymous"
-                  maxLength={30}
-                  className="w-full py-3.5 px-4 rounded-xl text-white text-sm outline-none"
-                  style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.1)' }}
-                  onFocus={e => { e.target.style.borderColor = '#FF6B00' }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
-                />
+                ))}
               </div>
             )}
           </div>
-        </div>
-      )}
 
-      {step === 'details' && (
-        <div className="px-5 pb-10 pt-3">
-          <button
-            id="submit-snap-btn"
-            onClick={handleSubmit}
-            disabled={!pandalName.trim() || !preview || submitting}
-            className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95 disabled:opacity-40"
-            style={{
-              background: (!pandalName.trim() || !preview || submitting) ? 'rgba(255,107,0,0.3)' : 'linear-gradient(135deg, #FF6B00, #C0392B)',
-              boxShadow: (!pandalName.trim() || !preview || submitting) ? 'none' : '0 8px 32px rgba(255,107,0,0.4)',
-            }}
-          >
-            {submitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent" style={{ animation: 'spinLoader 0.8s linear infinite' }} />
-                Posting…
+          {/* Neighborhood input */}
+          <div>
+            <label className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-1.5 block">Neighborhood</label>
+            <input
+              id="neighborhood-input"
+              type="text"
+              value={neighborhood}
+              onChange={e => setNeighborhood(e.target.value)}
+              placeholder="e.g. Usha Bazar, Banamalipur"
+              className="w-full py-3 px-3.5 rounded-xl text-white text-sm outline-none bg-white/5 border border-white/15 focus:border-amber-400"
+            />
+          </div>
+
+          {/* Interactive Mini-Map Preview Card (Confirmation) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-white/50 text-xs font-semibold uppercase tracking-widest block">
+                Confirm Location Pin
+              </label>
+              <span className="text-[10px] text-amber-300">Tap to fine-tune coords</span>
+            </div>
+            <div
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect()
+                const relX = (e.clientX - rect.left) / rect.width - 0.5
+                const relY = (e.clientY - rect.top) / rect.height - 0.5
+                const newCoords = {
+                  lat: coords.lat - relY * 0.008,
+                  lng: coords.lng + relX * 0.008
+                }
+                setCoords(newCoords)
+                setLocationSource('custom')
+                setSourceBadge({ text: '🎯 Custom Pinned', cls: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30' })
+              }}
+              className="relative w-full h-36 rounded-2xl overflow-hidden border border-white/15 bg-[#0d0d1a] cursor-crosshair flex flex-col items-center justify-center text-center p-3"
+            >
+              <div className="w-9 h-9 rounded-full bg-saffron/20 border border-saffron flex items-center justify-center text-base mb-1 animate-bounce">
+                📍
+              </div>
+              <span className="text-white text-xs font-bold">{pandalName || 'Selected Location'}</span>
+              <span className="font-mono text-amber-300 text-[10px] mt-0.5">{coords.lat.toFixed(4)}° N, {coords.lng.toFixed(4)}° E</span>
+              <span className="text-white/40 text-[9px] mt-1">Tap box to micro-adjust pin position</span>
+            </div>
+          </div>
+
+          {/* User ID card */}
+          {currentUser && (
+            <div className="glass-card rounded-xl p-2.5 flex items-center justify-between border border-white/10">
+              <div className="flex items-center gap-2 min-w-0">
+                <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-7 h-7 rounded-full border border-saffron object-cover" />
+                <div className="min-w-0">
+                  <span className="text-[9px] text-white/50 uppercase tracking-wider block">Posting as</span>
+                  <span className="text-white text-xs font-bold block truncate">{currentUser.displayName}</span>
+                </div>
+              </div>
+              <span className="text-[9px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                Verified Devotee
               </span>
-            ) : '🪔 Share to Map'}
-          </button>
+            </div>
+          )}
+
+          {/* Submit button */}
+          <div className="pt-2 pb-6">
+            <button
+              id="submit-snap-btn"
+              onClick={handleSubmit}
+              disabled={!pandalName.trim() || !preview || submitting}
+              className="w-full py-3.5 rounded-2xl text-white font-extrabold text-sm transition-all active:scale-95 disabled:opacity-40"
+              style={{
+                background: (!pandalName.trim() || !preview || submitting) ? 'rgba(255,107,0,0.3)' : 'linear-gradient(135deg, #FF6B00, #C0392B)',
+                boxShadow: (!pandalName.trim() || !preview || submitting) ? 'none' : '0 8px 32px rgba(255,107,0,0.4)',
+              }}
+            >
+              {submitting ? 'Publishing...' : '🪔 Publish Snap to Live Map'}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -644,6 +808,11 @@ export default function App() {
   const [toast, setToast] = useState<{ msg: string; visible: boolean }>({ msg: '', visible: false })
   const [liveCount, setLiveCount] = useState(23)
 
+  const [showSplash, setShowSplash] = useState(() => {
+    return sessionStorage.getItem('visited') !== 'true'
+  })
+  const [splashExiting, setSplashExiting] = useState(false)
+
   const [user, setUser] = useState<AuthUser | null>(() => {
     const cached = localStorage.getItem('puja_parikrama_user')
     if (cached) {
@@ -657,6 +826,26 @@ export default function App() {
     setToast({ msg, visible: true })
     setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000)
   }, [])
+
+  // ── Parikrama Splash Screen Controller ──
+  useEffect(() => {
+    if (!showSplash) return
+    sessionStorage.setItem('visited', 'true')
+    const timer1 = setTimeout(() => {
+      setSplashExiting(true)
+      if (googleMapRef.current) {
+        googleMapRef.current.panTo(currentUserCoords || AGARTALA_CENTER)
+        googleMapRef.current.setZoom(15)
+      }
+    }, 1800)
+    const timer2 = setTimeout(() => {
+      setShowSplash(false)
+    }, 2500)
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+    }
+  }, [showSplash, currentUserCoords])
 
   const handleGoogleSignIn = () => {
     const simulatedNames = ['Shatadru Sarkar', 'Ananya Roy', 'Priya Saha', 'Saptarshi Sen']
@@ -855,7 +1044,7 @@ export default function App() {
             <div className="absolute inset-0 rounded-full animate-ping"
               style={{ background: 'rgba(255,107,0,0.12)', animationDuration: '2s' }} />
           </div>
-          <h1 className="text-white font-bold text-2xl mb-1">Agartala Puja Snap</h1>
+          <h1 className="text-white font-bold text-2xl mb-1">Puja Parikrama</h1>
           <p className="text-white/40 text-sm mb-8">Loading live festival map…</p>
           <div className="flex gap-1.5">
             {[0, 1, 2].map(i => (
@@ -867,35 +1056,91 @@ export default function App() {
         </div>
       )}
 
-      {/* ── TOP BAR ── */}
-      {mapReady && (
-        <div className="absolute top-0 left-0 right-0 z-30 px-4 pt-12 pb-3">
-          <div className="glass rounded-2xl px-4 py-3 flex items-center justify-between"
-            style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #FF6B00, #C0392B)' }}>
-                <span className="text-lg">🪔</span>
-              </div>
-              <div>
-                <h1 className="text-white font-bold text-base leading-tight">Agartala Puja Snap</h1>
-                <p className="text-white/40 text-xs">Durga Puja 2026 · Live</p>
+      {/* ── 0. INTRO SPLASH SCREEN ANIMATION ("PARIKRAMA") ── */}
+      {showSplash && (
+        <div
+          id="splash-screen"
+          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-between py-12 px-6 bg-[#0F172A] select-none pointer-events-auto overflow-hidden transition-all duration-700 ease-in-out ${
+            splashExiting ? 'scale-[1.08] opacity-0 pointer-events-none' : 'scale-100 opacity-100'
+          }`}
+        >
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 50% 45%, rgba(240, 180, 41, 0.16) 0%, rgba(255, 107, 0, 0.08) 35%, rgba(15, 23, 42, 0) 70%)' }} />
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-orange-600/10 blur-3xl pointer-events-none" />
+
+          {/* Festive Top Emblem / Year Tag */}
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-amber-400/20 backdrop-blur-md shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-[11px] font-semibold tracking-widest text-amber-200/90 uppercase">Durga Puja 2026</span>
+            </div>
+          </div>
+
+          {/* Centered Brand Identity: Official Logo & "PARIKRAMA" Typography */}
+          <div className="relative z-10 flex flex-col items-center text-center my-auto">
+            <div className="relative mb-6">
+              <div className="absolute -inset-4 rounded-full bg-gradient-to-tr from-amber-500/35 via-orange-500/25 to-puja-crimson/35 blur-xl animate-pulse" />
+              <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full p-1 bg-gradient-to-b from-[#FCE588] via-[#F0B429] to-[#C0392B] shadow-[0_12px_40px_rgba(240,180,41,0.4)] flex items-center justify-center overflow-hidden">
+                <img src="/logo.png" alt="Parikrama Official Logo" className="w-full h-full rounded-full object-cover" />
               </div>
             </div>
 
+            <h1 className="text-4xl sm:text-5xl font-black tracking-[0.25em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-[#FFF7D6] via-[#F0B429] to-[#FF8833] drop-shadow-[0_4px_18px_rgba(240,180,41,0.45)] pl-[0.25em]">
+              PARIKRAMA
+            </h1>
+            <p className="text-xs sm:text-sm tracking-[0.35em] uppercase text-amber-200/80 font-semibold mt-3 pl-[0.35em]">
+              Agartala Puja Parikrama
+            </p>
+          </div>
+
+          {/* Bottom pulse loader */}
+          <div className="relative z-10 flex flex-col items-center gap-2.5 mb-4">
             <div className="flex items-center gap-2">
-              {/* Google Auth Button / User Profile */}
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+            </div>
+            <span className="text-xs font-medium tracking-widest text-amber-100/75 uppercase">
+              Initializing Map &amp; GPS...
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2. NEW FLOATING BRANDING BAR ("PUJA PARIKRAMA") ── */}
+      {mapReady && (
+        <header className="fixed top-3 left-0 right-0 z-50 px-3 sm:px-4 pointer-events-none flex justify-center">
+          <div className="backdrop-blur-md bg-slate-900/80 border border-white/10 rounded-full px-4 py-2 flex items-center justify-between w-full max-w-md pointer-events-auto shadow-2xl">
+            {/* Left / Center Section: Official Logo & Title */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-orange-500 to-puja-crimson flex-shrink-0 shadow-sm flex items-center justify-center overflow-hidden">
+                <img src="/logo.png" alt="Puja Parikrama Logo" className="w-full h-full rounded-full object-cover" />
+              </div>
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="text-white font-bold text-sm sm:text-base tracking-tight truncate">
+                  Puja <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 font-extrabold">Parikrama</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Right Section: Google Profile Avatar / Sign-In & Recenter Button */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Google Auth Controls */}
               {user ? (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full glass-light cursor-pointer">
-                  <img src={user.photoURL} alt={user.displayName} className="w-6 h-6 rounded-full border border-saffron object-cover" />
-                  <span className="text-white text-xs font-semibold max-w-[80px] truncate">{user.displayName.split(' ')[0]}</span>
-                  <button onClick={handleSignOut} title="Sign Out" className="text-white/40 hover:text-red-400 text-xs ml-1">✕</button>
+                <div
+                  onClick={() => showToast(`👤 Signed in as ${user.displayName}`)}
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 border border-white/20 pl-1 pr-2.5 py-1 rounded-full cursor-pointer transition active:scale-95 shadow-sm"
+                >
+                  <img src={user.photoURL} alt={user.displayName} className="w-6 h-6 rounded-full border border-amber-400 object-cover" />
+                  <span className="text-xs font-semibold text-white max-w-[70px] truncate">{user.displayName.split(' ')[0]}</span>
+                  <button onClick={(e) => { e.stopPropagation(); handleSignOut() }} title="Sign Out" className="text-white/40 hover:text-red-400 text-xs ml-1 transition">✕</button>
                 </div>
               ) : (
                 <button
-                  id="google-signin-btn"
+                  id="btn-google-signin"
                   onClick={handleGoogleSignIn}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold shadow-md active:scale-95 transition-all"
+                  title="Sign in with Google"
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-amber-400/40 px-2.5 py-1.5 rounded-full text-xs font-semibold text-white transition active:scale-95 shadow-sm"
                 >
                   <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -903,29 +1148,24 @@ export default function App() {
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                   </svg>
-                  <span>Sign In</span>
+                  <span className="hidden xs:inline sm:inline">Sign In</span>
                 </button>
               )}
 
-              {/* Live badge */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                style={{ background: 'rgba(255,107,0,0.2)', border: '1px solid rgba(255,107,0,0.4)' }}>
-                <div className="live-dot" />
-                <span className="text-white text-xs font-semibold">{liveCount} live</span>
-              </div>
-              {/* Locate me button */}
+              {/* Recenter / Locate Button (map.panTo(userLocation)) */}
               <button
-                id="locate-me-btn"
+                id="btn-recenter"
                 onClick={handleLocateMe}
-                className="w-9 h-9 rounded-xl flex items-center justify-center glass-light transition-all active:scale-90"
+                title="Locate My Position"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white/90 hover:text-amber-400 transition active:scale-90 shadow-sm"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)">
-                  <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06z" />
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
                 </svg>
               </button>
             </div>
           </div>
-        </div>
+        </header>
       )}
 
       {/* ── FLOATING CAMERA BUTTON ── */}

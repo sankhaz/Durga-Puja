@@ -3,9 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="description" content="Agartala Puja Snap — Mobile-first Snapchat Map web app for Durga Puja pandals in Agartala, Tripura.">
-  <meta name="theme-color" content="#0a0a14">
-  <title>Agartala Puja Snap 🪔 • Durga Puja Map</title>
+  <meta name="description" content="Puja Parikrama — Mobile-first live map web app for Durga Puja pandals in Agartala, Tripura.">
+  <meta name="theme-color" content="#0F172A">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <title>Puja Parikrama 🪔 • Durga Puja Live Map</title>
+
+  <script>
+    // Immediate pre-render check to bypass splash on subsequent visits in the same session
+    if (sessionStorage.getItem('visited') === 'true') {
+      document.documentElement.classList.add('splash-bypassed');
+    }
+  </script>
 
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +23,8 @@
 
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- EXIF.js library for client-side EXIF GPS extraction from gallery images -->
+  <!-- Lightweight exifr and EXIF.js libraries for client-side EXIF GPS extraction -->
+  <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
   <script>
     tailwind.config = {
@@ -65,6 +75,53 @@
       background-color: #0a0a14;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       position: fixed;
+    }
+
+    /* ── 0. INTRO SPLASH SCREEN KEYFRAMES & TRANSITIONS ── */
+    #splash-screen {
+      transition: transform 0.7s ease-in-out, opacity 0.7s ease-in-out;
+      will-change: transform, opacity;
+    }
+
+    #splash-screen.splash-exit {
+      transform: scale(1.08) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    @keyframes splashFadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(22px) scale(0.92);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .splash-content-in {
+      animation: splashFadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes splashDelayedIn {
+      0% {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .splash-fade-in-delayed {
+      animation: splashDelayedIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards;
+    }
+
+    .splash-bypassed #splash-screen {
+      display: none !important;
+      pointer-events: none !important;
     }
 
     /* ── MAP CONTAINER ── */
@@ -315,6 +372,86 @@
 </head>
 <body class="bg-[#0a0a14] text-white">
 
+  <!-- ── 0. INTRO SPLASH SCREEN ANIMATION ("PARIKRAMA") ── -->
+  <div id="splash-screen" class="fixed inset-0 z-[9999] flex flex-col items-center justify-between py-12 px-6 bg-[#0F172A] select-none pointer-events-auto overflow-hidden">
+    <!-- Atmospheric deep dark festive background with glowing gold accents -->
+    <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(circle at 50% 45%, rgba(240, 180, 41, 0.16) 0%, rgba(255, 107, 0, 0.08) 35%, rgba(15, 23, 42, 0) 70%);"></div>
+    <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-orange-600/10 blur-3xl pointer-events-none"></div>
+
+    <!-- Festive Top Emblem / Year Tag -->
+    <div class="relative z-10 opacity-0 splash-fade-in-delayed">
+      <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-amber-400/20 backdrop-blur-md shadow-sm">
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span class="text-[11px] font-semibold tracking-widest text-amber-200/90 uppercase">Durga Puja 2026</span>
+      </div>
+    </div>
+
+    <!-- Centered Brand Identity: Official Logo & "PARIKRAMA" Typography -->
+    <div class="relative z-10 flex flex-col items-center text-center splash-content-in my-auto">
+      <!-- Official Logo with Golden Halo -->
+      <div class="relative mb-6">
+        <div class="absolute -inset-4 rounded-full bg-gradient-to-tr from-amber-500/35 via-orange-500/25 to-puja-crimson/35 blur-xl animate-pulse"></div>
+        <div class="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full p-1 bg-gradient-to-b from-[#FCE588] via-[#F0B429] to-[#C0392B] shadow-[0_12px_40px_rgba(240,180,41,0.4)] flex items-center justify-center overflow-hidden">
+          <img src="logo.png" alt="Parikrama Official Logo" class="w-full h-full rounded-full object-cover">
+        </div>
+      </div>
+
+      <!-- Title: "PARIKRAMA" in Bold Gold Gradient -->
+      <h1 class="text-4xl sm:text-5xl font-black tracking-[0.25em] uppercase text-transparent bg-clip-text bg-gradient-to-r from-[#FFF7D6] via-[#F0B429] to-[#FF8833] drop-shadow-[0_4px_18px_rgba(240,180,41,0.45)] pl-[0.25em]">
+        PARIKRAMA
+      </h1>
+      <p class="text-xs sm:text-sm tracking-[0.35em] uppercase text-amber-200/80 font-semibold mt-3 pl-[0.35em]">
+        Agartala Puja Parikrama
+      </p>
+    </div>
+
+    <!-- Subtle Animated Pulse Loader at Bottom -->
+    <div class="relative z-10 flex flex-col items-center gap-2.5 mb-4 splash-fade-in-delayed">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+      </div>
+      <span class="text-xs font-medium tracking-widest text-amber-100/75 uppercase">
+        Initializing Map &amp; GPS...
+      </span>
+    </div>
+  </div>
+
+  <script>
+    // Immediate Splash Screen Execution Controller
+    (function() {
+      const splashEl = document.getElementById('splash-screen');
+      if (!splashEl) return;
+      if (sessionStorage.getItem('visited') === 'true') {
+        splashEl.style.display = 'none';
+        splashEl.style.pointerEvents = 'none';
+        splashEl.remove();
+        return;
+      }
+      sessionStorage.setItem('visited', 'true');
+      setTimeout(() => {
+        if (splashEl) {
+          splashEl.classList.add('splash-exit');
+          if (typeof map !== 'undefined' && map) {
+            const loc = (typeof userLocation !== 'undefined' && userLocation) 
+              ? userLocation 
+              : ((typeof currentUserCoords !== 'undefined' && currentUserCoords) ? currentUserCoords : { lat: 23.8315, lng: 91.2868 });
+            map.panTo(loc);
+            map.setZoom(15);
+          }
+        }
+      }, 1800);
+      setTimeout(() => {
+        if (splashEl) {
+          splashEl.style.pointerEvents = 'none';
+          splashEl.remove();
+        }
+      }, 2500);
+    })();
+  </script>
+
   <!-- ── 1. MAP VIEWPORT CANVAS ── -->
   <div id="map"></div>
 
@@ -325,54 +462,47 @@
     <div id="sim-markers-container" class="absolute inset-0 pointer-events-auto"></div>
   </div>
 
-  <!-- ── 2. TOP FLOATING APP BAR ── -->
-  <header class="fixed top-0 left-0 right-0 z-30 px-4 pt-12 pb-3 pointer-events-none">
-    <div class="glass-nav rounded-2xl px-4 py-3 flex items-center justify-between pointer-events-auto shadow-2xl">
-      <!-- Title & Branding -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-saffron to-puja-crimson flex items-center justify-center shadow-lg shadow-saffron/30 flex-shrink-0">
-          <span class="text-xl">🪔</span>
+  <!-- ── 2. NEW FLOATING BRANDING BAR ("PUJA PARIKRAMA") ── -->
+  <header class="fixed top-3 left-0 right-0 z-50 px-3 sm:px-4 pointer-events-none flex justify-center">
+    <div class="backdrop-blur-md bg-slate-900/80 border border-white/10 rounded-full px-4 py-2 flex items-center justify-between w-full max-w-md pointer-events-auto shadow-2xl">
+      <!-- Left / Center Section: Official Logo & Title -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-orange-500 to-puja-crimson flex-shrink-0 shadow-sm flex items-center justify-center overflow-hidden">
+          <img src="logo.png" alt="Puja Parikrama Logo" class="w-full h-full rounded-full object-cover">
         </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <h1 class="text-white font-bold text-base tracking-tight leading-none">Agartala Puja Snap</h1>
-          </div>
-          <p class="text-white/50 text-xs mt-1">Durga Puja 2026 • Live Map</p>
+        <div class="flex items-center gap-1.5 truncate">
+          <span class="text-white font-bold text-sm sm:text-base tracking-tight truncate">
+            Puja <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 font-extrabold">Parikrama</span>
+          </span>
         </div>
       </div>
 
-      <!-- Right Action Badges -->
-      <div class="flex items-center gap-2">
-        <!-- Live Badge -->
-        <div class="flex items-center gap-1.5 bg-saffron/15 border border-saffron/40 px-3 py-1.5 rounded-full">
-          <span class="w-2 h-2 rounded-full bg-saffron animate-live-blink"></span>
-          <span id="live-users-count" class="text-white text-xs font-semibold">142 live</span>
-        </div>
-
+      <!-- Right Section: Google Profile Avatar / Sign-In & Recenter Button -->
+      <div class="flex items-center gap-2 flex-shrink-0">
         <!-- Google Auth Header Controls -->
         <div id="auth-header-container" class="flex items-center">
           <!-- Unauthenticated: Sign in with Google Button -->
-          <button id="btn-google-signin" class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/25 px-3 py-1.5 rounded-full text-xs font-semibold text-white transition active:scale-95 shadow-md">
+          <button id="btn-google-signin" title="Sign in with Google" class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-amber-400/40 px-2.5 py-1.5 rounded-full text-xs font-semibold text-white transition active:scale-95 shadow-sm">
             <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
-            <span>Sign In</span>
+            <span class="hidden xs:inline sm:inline">Sign In</span>
           </button>
 
           <!-- Authenticated: Profile Avatar & Name Chip -->
-          <div id="user-profile-chip" class="hidden flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 pl-1 pr-2.5 py-1 rounded-full cursor-pointer transition">
-            <img id="user-avatar-img" src="" alt="Google Profile" class="w-6 h-6 rounded-full border border-saffron object-cover">
-            <span id="user-name-label" class="text-xs font-semibold text-white max-w-[80px] truncate">User</span>
-            <button id="btn-signout" title="Sign out" class="text-white/40 hover:text-red-400 text-xs ml-0.5 transition">✕</button>
+          <div id="user-profile-chip" class="hidden flex items-center gap-1.5 bg-white/10 hover:bg-white/15 border border-white/20 pl-1 pr-2.5 py-1 rounded-full cursor-pointer transition active:scale-95 shadow-sm">
+            <img id="user-avatar-img" src="" alt="Google Profile" class="w-6 h-6 rounded-full border border-amber-400 object-cover">
+            <span id="user-name-label" class="text-xs font-semibold text-white max-w-[70px] truncate">User</span>
+            <button id="btn-signout" title="Sign out" class="text-white/40 hover:text-red-400 text-xs ml-1 transition">✕</button>
           </div>
         </div>
 
-        <!-- Recenter / Locate Button -->
-        <button id="btn-recenter" title="Locate My Position" class="w-9 h-9 rounded-xl glass-card flex items-center justify-center text-white/80 hover:text-white transition active:scale-90">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <!-- Recenter / Locate Button (map.panTo(userLocation)) -->
+        <button id="btn-recenter" title="Locate My Position" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white/90 hover:text-amber-400 transition active:scale-90 shadow-sm">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
           </svg>
         </button>
@@ -539,99 +669,146 @@
     </div>
   </div>
 
-  <!-- ── 6. PHOTO UPLOAD MODAL (With Camera & GPS Auto-attach) ── -->
-  <div id="upload-modal" class="snap-modal-backdrop fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex flex-col justify-end sm:justify-center p-0 sm:p-6">
-    <div class="snap-modal-content w-full sm:max-w-md mx-auto bg-[#121224] rounded-t-[32px] sm:rounded-[32px] border border-white/10 p-6 flex flex-col max-h-[90vh] overflow-y-auto hide-scrollbar">
+  <!-- ── 6. SMART HYBRID LOCATION TAGGING UPLOAD MODAL (Strategy 4) ── -->
+  <div id="upload-modal" class="snap-modal-backdrop fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex flex-col justify-end sm:justify-center p-0 sm:p-4">
+    <div class="snap-modal-content w-full sm:max-w-lg mx-auto bg-[#121224] rounded-t-[32px] sm:rounded-[28px] border border-white/10 p-5 sm:p-6 flex flex-col max-h-[92vh] overflow-y-auto hide-scrollbar shadow-2xl">
       
       <!-- Modal Header -->
-      <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">📸</span>
-          <h2 class="text-white font-bold text-lg">Snap Puja Pandal</h2>
+      <div class="flex items-center justify-between pb-3.5 border-b border-white/10 mb-4 flex-shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 to-puja-crimson flex items-center justify-center overflow-hidden flex-shrink-0">
+            <img src="logo.png" alt="Puja Parikrama" class="w-full h-full rounded-full object-cover">
+          </div>
+          <div>
+            <h2 class="text-white font-bold text-base leading-tight">Snap & Tag Pandal</h2>
+            <p class="text-white/40 text-[11px]">Strategy 4: Hybrid EXIF + Live GPS + Map Confirmation</p>
+          </div>
         </div>
-        <button id="btn-close-upload" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white">
+        <button id="btn-close-upload" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition active:scale-95">
           ✕
         </button>
       </div>
 
-      <!-- Step 1: Camera Trigger & Image Preview Area -->
-      <div id="upload-capture-area" class="space-y-4">
+      <!-- Main Scrollable Content -->
+      <div class="space-y-4">
         <!-- Hidden file inputs (Images and Videos) -->
         <input type="file" id="camera-input" accept="image/*,video/*" capture="environment" class="hidden">
         <input type="file" id="gallery-input" accept="image/*,video/*" class="hidden">
 
-        <!-- Preview Box (Supports both photo and video) -->
-        <div id="preview-box" class="w-full h-56 rounded-2xl border-2 border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center relative overflow-hidden group">
+        <!-- 1. Media Preview Area -->
+        <div id="preview-box" class="w-full h-44 sm:h-48 rounded-2xl border-2 border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center relative overflow-hidden group">
           <div id="placeholder-content" class="text-center p-4">
-            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-saffron to-puja-gold mx-auto flex items-center justify-center mb-3 shadow-lg shadow-saffron/30">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-saffron to-puja-gold mx-auto flex items-center justify-center mb-2.5 shadow-lg shadow-saffron/30">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                 <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
                 <circle cx="12" cy="13" r="3" fill="white"/>
               </svg>
             </div>
-            <p class="text-white font-semibold text-sm">Snap an idol, pandal, or video</p>
-            <p class="text-white/40 text-xs mt-1">Camera attaches GPS coordinates automatically</p>
+            <p class="text-white font-semibold text-xs sm:text-sm">Capture or select pandal media</p>
+            <p class="text-white/40 text-[11px] mt-0.5">EXIF GPS will be extracted automatically</p>
           </div>
           <img id="upload-preview-img" src="" alt="Upload Preview" class="hidden absolute inset-0 w-full h-full object-cover">
           <video id="upload-preview-video" class="hidden absolute inset-0 w-full h-full object-cover" playsinline autoplay loop muted></video>
+          
+          <!-- Media Change Badge -->
+          <div id="media-change-badge" class="hidden absolute top-2 right-2 bg-black/65 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] text-white/90 border border-white/20 flex items-center gap-1.5 shadow-md">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Media Selected
+          </div>
         </div>
 
         <!-- Buttons for Camera vs Gallery -->
-        <div class="grid grid-cols-2 gap-3">
-          <button id="btn-trigger-camera" class="py-3 px-4 rounded-xl bg-gradient-to-r from-saffron to-puja-crimson text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-saffron/30 active:scale-95 transition">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <div class="grid grid-cols-2 gap-2.5">
+          <button id="btn-trigger-camera" class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-saffron to-puja-crimson text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-saffron/25 active:scale-95 transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
             </svg>
-            Capture Snap
+            <span>Live Camera</span>
           </button>
-          <button id="btn-trigger-gallery" class="py-3 px-4 rounded-xl glass-card text-white/90 font-semibold text-sm flex items-center justify-center gap-2 hover:text-white active:scale-95 transition">
-            <span>🖼️</span> Gallery / Video
+          <button id="btn-trigger-gallery" class="py-2.5 px-3 rounded-xl glass-card text-white/90 font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 hover:text-white active:scale-95 transition">
+            <span>🖼️</span> <span>Local Gallery</span>
           </button>
         </div>
 
-        <!-- Authenticated Google Devotee Card -->
-        <div id="upload-user-card" class="glass-card rounded-xl p-3 flex items-center justify-between">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <img id="upload-user-avatar" class="w-8 h-8 rounded-full border border-saffron object-cover flex-shrink-0" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Devotee" alt="Google Profile">
-            <div class="min-w-0">
-              <span class="text-[10px] text-white/50 uppercase tracking-wider block">Posting As Google Devotee</span>
-              <span id="upload-user-name" class="text-white text-xs font-bold block truncate">Signed In Devotee</span>
+        <!-- 2. Location Detection Waterfall Status Card -->
+        <div id="gps-status-card" class="glass-card rounded-2xl p-3.5 border border-white/10 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 min-w-0">
+              <span id="gps-status-dot" class="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse flex-shrink-0"></span>
+              <span id="gps-status-text" class="text-white font-bold text-xs truncate">Ready for Media</span>
             </div>
+            <span id="gps-strategy-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/10 text-white/70 border border-white/15 flex-shrink-0">
+              Standby
+            </span>
           </div>
-          <span class="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Verified ID
-          </span>
+          <div class="flex items-center justify-between text-[11px] text-white/60 pt-0.5">
+            <span id="gps-method-desc" class="truncate pr-2">Extracting EXIF GPS or falling back to live location</span>
+            <span id="gps-coords-preview" class="font-mono text-[10px] text-amber-300 flex-shrink-0 bg-white/5 px-2 py-0.5 rounded border border-white/10">--° N, --° E</span>
+          </div>
         </div>
 
-        <!-- Clean Geotag Location Status (No raw coordinates) -->
-        <div class="glass-card rounded-xl p-3 flex items-center justify-between text-xs">
-          <div class="flex items-center gap-2.5">
-            <span id="gps-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <div>
-              <span id="gps-status-text" class="text-white/90 font-semibold block leading-tight">GPS Location Ready</span>
-              <span id="gps-method-desc" class="text-white/50 text-[11px] block mt-0.5">Agartala, Tripura • Auto-attached</span>
+        <!-- 3. Pandal Auto-Matching Card & Searchable Dropdown -->
+        <div class="space-y-2">
+          <!-- Auto-Match Banner -->
+          <div id="pandal-match-banner" class="hidden rounded-xl p-2.5 border transition-all duration-200 flex items-center justify-between bg-emerald-500/10 border-emerald-500/30">
+            <div class="flex items-center gap-2 min-w-0">
+              <span id="pandal-match-icon" class="text-base flex-shrink-0">🎉</span>
+              <div class="min-w-0">
+                <span id="pandal-match-label" class="text-white text-xs font-bold block truncate">Matched with: Bharat Ratna Sangha</span>
+                <span id="pandal-match-sub" class="text-[10px] text-emerald-300 block">50m away from coordinates</span>
+              </div>
             </div>
-          </div>
-          <span id="gps-strategy-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            📍 GPS Active
-          </span>
-        </div>
-
-        <!-- Form Fields -->
-        <div class="space-y-3 pt-1">
-          <div>
-            <label class="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1">Pandal Name *</label>
-            <input id="input-pandal-name" type="text" placeholder="e.g. Ujjayanta Palace Club" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-saffron">
+            <span id="pandal-match-tag" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
+              Auto-Matched
+            </span>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
+          <!-- Pandal Search & Dropdown Input -->
+          <div class="relative">
+            <label class="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span>Pandal Name *</span>
+              <span class="text-[10px] text-amber-300/80 font-normal">Auto-selected or choose nearest</span>
+            </label>
+            <div class="relative">
+              <input 
+                id="input-pandal-name" 
+                type="text" 
+                placeholder="Type or select pandal..." 
+                autocomplete="off"
+                class="w-full bg-white/5 border border-white/15 rounded-xl pl-3.5 pr-10 py-2.5 text-white text-xs sm:text-sm focus:outline-none focus:border-amber-400 transition"
+              >
+              <button 
+                type="button" 
+                id="btn-toggle-pandal-dropdown" 
+                class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition"
+              >
+                ▼
+              </button>
+            </div>
+
+            <!-- Proximity-Sorted Dropdown Menu -->
+            <div 
+              id="pandal-dropdown-menu" 
+              class="hidden absolute left-0 right-0 top-full mt-1.5 z-30 bg-[#16162a] border border-white/15 rounded-xl shadow-2xl max-h-48 overflow-y-auto hide-scrollbar p-1.5 backdrop-blur-xl"
+            >
+              <div class="px-2 py-1 text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center justify-between border-b border-white/10 mb-1">
+                <span>Nearest Pandals (Proximity Sorted)</span>
+                <span>Distance</span>
+              </div>
+              <div id="pandal-dropdown-list" class="space-y-1">
+                <!-- Dynamically populated pandals with live calculated distance -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Neighborhood & Category Row -->
+          <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1">Neighborhood</label>
-              <input id="input-neighborhood" type="text" placeholder="e.g. Palace Compound" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-saffron">
+              <label class="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-1">Neighborhood</label>
+              <input id="input-neighborhood" type="text" placeholder="e.g. Usha Bazar" class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-xs sm:text-sm focus:outline-none focus:border-amber-400">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1">Category Emoji</label>
-              <select id="input-category-emoji" class="w-full bg-[#121224] border border-white/10 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-saffron">
+              <label class="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-1">Category Emoji</label>
+              <select id="input-category-emoji" class="w-full bg-[#16162a] border border-white/15 rounded-xl px-2.5 py-2 text-white text-xs sm:text-sm focus:outline-none focus:border-amber-400">
                 <option value="🪔">🪔 Traditional Pandal</option>
                 <option value="👑">👑 Royal Palace Mandap</option>
                 <option value="🎆">🎆 Theme & Lighting</option>
@@ -640,12 +817,58 @@
               </select>
             </div>
           </div>
-          <input type="hidden" id="input-uploader" value="">
         </div>
 
-        <!-- Post Action Button -->
-        <button id="btn-submit-snap" disabled class="w-full py-4 rounded-2xl bg-gradient-to-r from-saffron to-puja-crimson text-white font-extrabold text-base flex items-center justify-center gap-2 shadow-xl shadow-saffron/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition mt-2">
-          <span>🪔</span> Publish to Agartala Map
+        <!-- 4. Interactive Mini-Map Pin Picker (Confirmation) -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-semibold text-white/60 uppercase tracking-wider flex items-center gap-1.5">
+              <span>📍 Confirm Pin on Map</span>
+              <span class="text-[10px] text-emerald-400 font-normal lowercase">(draggable)</span>
+            </label>
+            <span class="text-[10px] text-amber-200/70">Drag pin or tap map to fine-tune</span>
+          </div>
+
+          <!-- Mini Map Container -->
+          <div class="relative w-full h-44 sm:h-48 rounded-2xl overflow-hidden border border-white/15 bg-[#0a0a14] shadow-inner">
+            <div id="mini-map-picker" class="w-full h-full"></div>
+            <!-- Interactive fallback overlay if Maps JS API is offline -->
+            <div id="mini-map-fallback" class="hidden absolute inset-0 bg-[#0d0d1a] flex flex-col items-center justify-center p-3 text-center">
+              <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center mb-1.5 text-lg">📍</div>
+              <p class="text-white text-xs font-semibold">Interactive Simulated Mini-Map</p>
+              <p id="mini-fallback-coords" class="text-amber-300 font-mono text-[10px] mt-0.5">23.8315° N, 91.2868° E</p>
+              <p class="text-white/40 text-[10px] mt-1">Tap anywhere to re-anchor pin</p>
+            </div>
+            <!-- Floating helper badge on mini-map -->
+            <div class="absolute bottom-2 left-2 right-2 pointer-events-none flex justify-center">
+              <span class="bg-black/80 backdrop-blur-md border border-white/15 rounded-full px-3 py-1 text-[10px] font-medium text-white/90 shadow-md">
+                ✋ Drag pin to adjust exact pandal entrance
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Posting User Chip -->
+        <div id="upload-user-card" class="glass-card rounded-xl p-2.5 flex items-center justify-between border border-white/10">
+          <div class="flex items-center gap-2 min-w-0">
+            <img id="upload-user-avatar" class="w-7 h-7 rounded-full border border-amber-400 object-cover flex-shrink-0" src="logo.png" alt="Google Profile">
+            <div class="min-w-0">
+              <span class="text-[9px] text-white/50 uppercase tracking-wider block">Posting With Google Profile</span>
+              <span id="upload-user-name" class="text-white text-xs font-bold block truncate">Signed In Devotee</span>
+            </div>
+          </div>
+          <span class="text-[9px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> GPS & ID Verified
+          </span>
+        </div>
+
+        <!-- 6. Submit Button -->
+        <button 
+          id="btn-submit-snap" 
+          disabled 
+          class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-saffron to-puja-crimson text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-xl shadow-saffron/25 disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition flex-shrink-0"
+        >
+          <span>🪔</span> Publish Snap to Live Map
         </button>
       </div>
     </div>
@@ -952,8 +1175,8 @@
     let userLiveMarker = null;
     let currentUserCoords = { ...AGARTALA_CENTER };
 
-    /* ── Haversine Distance Formula (km) ── */
-    function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    /* ── Haversine Distance Formula (km & meters) ── */
+    function calculateHaversineDistanceKm(lat1, lon1, lat2, lon2) {
       const R = 6371; // Earth's mean radius in kilometers
       const toRad = Math.PI / 180;
       const dLat = (lat2 - lat1) * toRad;
@@ -966,11 +1189,26 @@
       return R * c;
     }
 
+    function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+      return calculateHaversineDistanceKm(lat1, lon1, lat2, lon2);
+    }
+
+    function calculateHaversineDistanceMeters(lat1, lon1, lat2, lon2) {
+      return Math.round(calculateHaversineDistanceKm(lat1, lon1, lat2, lon2) * 1000);
+    }
+
     function formatDistance(km) {
       if (km < 1) {
-        return `${Math.round(km * 1000)} m away`;
+        return `${Math.round(km * 1000)}m away`;
       }
-      return `${km.toFixed(1)} km away`;
+      return `${km.toFixed(1)}km away`;
+    }
+
+    function formatDistanceText(meters) {
+      if (meters < 1000) {
+        return `${Math.round(meters)}m away`;
+      }
+      return `${(meters / 1000).toFixed(1)}km away`;
     }
 
     /* ── Google Maps Initialization Callback ── */
@@ -1512,7 +1750,7 @@
     document.getElementById('btn-story-share').addEventListener('click', () => {
       if (navigator.share) {
         navigator.share({
-          title: 'Agartala Puja Snap',
+          title: 'Puja Parikrama',
           text: 'Check out this Durga Puja pandal in Agartala!',
           url: window.location.href,
         }).catch(() => {});
@@ -1786,16 +2024,495 @@
     }
     initFirestoreRealtimeSync();
 
-    /* ── Camera Upload Triggers (Protected by Google Auth) ── */
+    /* ── MASTER DATABASE OF AGARTALA PANDALS (For Auto-Matching & Dropdown) ── */
+    const AGARTALA_MASTER_PANDALS = [
+      { name: 'Bharat Ratna Sangha', neighborhood: 'Usha Bazar', lat: 23.8820, lng: 91.2785, emoji: '🪔' },
+      { name: 'Ujjayanta Palace Mandap', neighborhood: 'Palace Compound', lat: 23.8350, lng: 91.2880, emoji: '👑' },
+      { name: 'Banamalipur Club & Youth Union', neighborhood: 'Banamalipur', lat: 23.8335, lng: 91.2915, emoji: '🎆' },
+      { name: 'Battala Durga Puja', neighborhood: 'Battala', lat: 23.8361, lng: 91.2812, emoji: '🪔' },
+      { name: 'Dhaleswar Netaji Play Center', neighborhood: 'Dhaleswar', lat: 23.8310, lng: 91.2965, emoji: '🌟' },
+      { name: 'Ramnagar Road No. 2', neighborhood: 'Ramnagar', lat: 23.8430, lng: 91.2840, emoji: '✨' },
+      { name: 'Shanti Para Youth Club', neighborhood: 'Shantipara', lat: 23.8375, lng: 91.2905, emoji: '🎊' },
+      { name: 'Melarmath Sarbajanin Mandap', neighborhood: 'Melarmath', lat: 23.8305, lng: 91.2855, emoji: '🕊️' },
+      { name: 'Kali Bari Puja Samiti', neighborhood: 'Kali Bari', lat: 23.8295, lng: 91.2940, emoji: '🌺' },
+      { name: 'Polestar Club', neighborhood: 'Banamalipur', lat: 23.8368, lng: 91.2932, emoji: '⚡' },
+      { name: 'Deshabandhu Chittaranjan Club', neighborhood: 'Dhaleswar', lat: 23.8285, lng: 91.2985, emoji: '🎺' },
+      { name: 'Aikatan Sangha', neighborhood: 'Kunjaban', lat: 23.8480, lng: 91.2890, emoji: '🪕' },
+      { name: 'Badharghat Sporting Club', neighborhood: 'Badharghat', lat: 23.8120, lng: 91.2740, emoji: '🥁' },
+      { name: 'Pratapgarh Youth Federation', neighborhood: 'Pratapgarh', lat: 23.8210, lng: 91.2895, emoji: '🔥' }
+    ];
+
+
+
+    /* ── State variables for Strategy 4 Hybrid Location Tagging ── */
+    let submissionCoords = { lat: 23.8315, lng: 91.2868 };
+    let currentStrategyBadgeText = 'Live Device GPS';
+    let currentStrategyBadgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+    let miniMap = null;
+    let miniMapMarker = null;
+
+    /* ── Step 1: EXIF Metadata Extraction via exifr (Primary) ── */
+    async function extractExifGps(file) {
+      if (!file || file.type.startsWith('video')) {
+        throw new Error('Video files do not support EXIF GPS metadata');
+      }
+
+      // Try exifr library first
+      if (window.exifr) {
+        try {
+          const gps = await window.exifr.gps(file);
+          if (gps && typeof gps.latitude === 'number' && typeof gps.longitude === 'number' && !isNaN(gps.latitude) && !isNaN(gps.longitude) && gps.latitude !== 0) {
+            return {
+              lat: gps.latitude,
+              lng: gps.longitude,
+              source: 'exif',
+              badgeText: '📸 Photo EXIF GPS',
+              badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+              dotClass: 'bg-sky-400',
+              desc: 'Extracted directly from photo camera EXIF tags'
+            };
+          }
+        } catch (err) {
+          console.warn('exifr parsing notice:', err);
+        }
+      }
+
+      // Fallback: exif-js library
+      if (window.EXIF) {
+        return new Promise((resolve, reject) => {
+          EXIF.getData(file, function() {
+            try {
+              const lat = EXIF.getTag(this, 'GPSLatitude');
+              const latRef = EXIF.getTag(this, 'GPSLatitudeRef') || 'N';
+              const lng = EXIF.getTag(this, 'GPSLongitude');
+              const lngRef = EXIF.getTag(this, 'GPSLongitudeRef') || 'E';
+              if (lat && lng && Array.isArray(lat) && Array.isArray(lng) && lat.length >= 3 && lng.length >= 3) {
+                const latitude = convertDMSToDD(lat[0], lat[1], lat[2], latRef);
+                const longitude = convertDMSToDD(lng[0], lng[1], lng[2], lngRef);
+                if (!isNaN(latitude) && !isNaN(longitude) && latitude !== 0 && longitude !== 0) {
+                  return resolve({
+                    lat: latitude,
+                    lng: longitude,
+                    source: 'exif',
+                    badgeText: '📸 Photo EXIF GPS',
+                    badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+                    dotClass: 'bg-sky-400',
+                    desc: 'Extracted from photo camera EXIF metadata'
+                  });
+                }
+              }
+              reject(new Error('No EXIF GPS tags found in photo'));
+            } catch (e) {
+              reject(e);
+            }
+          });
+        });
+      }
+
+      throw new Error('No EXIF library available or GPS tags missing');
+    }
+
+    /* Convert Degree-Minute-Second GPS coordinates to Decimal Degrees */
+    function convertDMSToDD(degrees, minutes, seconds, direction) {
+      const d = typeof degrees === 'object' && degrees.numerator ? (degrees.numerator / degrees.denominator) : Number(degrees);
+      const m = typeof minutes === 'object' && minutes.numerator ? (minutes.numerator / minutes.denominator) : Number(minutes);
+      const s = typeof seconds === 'object' && seconds.numerator ? (seconds.numerator / seconds.denominator) : Number(seconds);
+      let dd = d + (m / 60) + (s / 3600);
+      if (direction === 'S' || direction === 'W') {
+        dd = dd * -1;
+      }
+      return dd;
+    }
+
+    /* ── Step 2: Live GPS Fallback (Secondary) ── */
+    function getLiveDeviceGps() {
+      return new Promise((resolve, reject) => {
+        if (!('geolocation' in navigator)) {
+          return reject(new Error('Geolocation not supported by device'));
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            resolve({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              source: 'live_gps',
+              badgeText: '📡 Live Device GPS',
+              badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+              dotClass: 'bg-emerald-400',
+              desc: 'Captured via device background GPS hardware'
+            });
+          },
+          (err) => reject(err),
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+      });
+    }
+
+    /* ── Step 2 Fallback: City Center Approximation ── */
+    function getCityCenterFallback() {
+      const offsetLat = (Math.random() - 0.5) * 0.012;
+      const offsetLng = (Math.random() - 0.5) * 0.012;
+      return {
+        lat: AGARTALA_CENTER.lat + offsetLat,
+        lng: AGARTALA_CENTER.lng + offsetLng,
+        source: 'city_center',
+        badgeText: '📍 Agartala Center',
+        badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+        dotClass: 'bg-amber-400',
+        desc: 'City center fallback (Drag pin on map to fine-tune)'
+      };
+    }
+
+    /* ── Step 3: Pandal Auto-Matching ── */
+    function matchNearestPandal(coords) {
+      const list = AGARTALA_MASTER_PANDALS.map(p => {
+        const dist = calculateHaversineDistanceMeters(coords.lat, coords.lng, p.lat, p.lng);
+        return { ...p, distance: dist, distText: formatDistanceText(dist) };
+      }).sort((a, b) => a.distance - b.distance);
+
+      const nearest = list[0];
+      const isClose = nearest && nearest.distance <= 500;
+      return { nearest, isClose, allSorted: list };
+    }
+
+    function renderPandalAutoMatch(matchResult, autoFillInputs = false) {
+      const banner = document.getElementById('pandal-match-banner');
+      const label = document.getElementById('pandal-match-label');
+      const sub = document.getElementById('pandal-match-sub');
+      const tag = document.getElementById('pandal-match-tag');
+      const icon = document.getElementById('pandal-match-icon');
+
+      if (!banner || !matchResult.nearest) return;
+
+      banner.classList.remove('hidden');
+      const nearest = matchResult.nearest;
+
+      if (matchResult.isClose) {
+        banner.className = 'rounded-xl p-2.5 border transition-all duration-200 flex items-center justify-between bg-emerald-500/15 border-emerald-500/40 shadow-sm';
+        icon.textContent = '🎉';
+        label.textContent = `Matched with: ${nearest.name}`;
+        sub.className = 'text-[10px] text-emerald-300 block font-medium';
+        sub.textContent = `${nearest.distText} from selected coordinates • Auto-linked`;
+        tag.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex-shrink-0';
+        tag.textContent = 'Auto-Matched';
+
+        if (autoFillInputs) {
+          inputPandalName.value = nearest.name;
+          inputNeighborhood.value = nearest.neighborhood;
+          if (nearest.emoji && inputCategoryEmoji) inputCategoryEmoji.value = nearest.emoji;
+        }
+      } else {
+        banner.className = 'rounded-xl p-2.5 border transition-all duration-200 flex items-center justify-between bg-amber-500/10 border-amber-500/30';
+        icon.textContent = '📍';
+        label.textContent = `Nearest Registered: ${nearest.name}`;
+        sub.className = 'text-[10px] text-amber-200/70 block';
+        sub.textContent = `${nearest.distText} from pin • Choose from list or type custom`;
+        tag.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex-shrink-0';
+        tag.textContent = 'Nearest Pandal';
+      }
+    }
+
+    function renderPandalDropdownList(sortedList) {
+      const listEl = document.getElementById('pandal-dropdown-list');
+      if (!listEl) return;
+
+      listEl.innerHTML = '';
+      sortedList.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'pandal-dropdown-item p-2 hover:bg-white/10 rounded-xl cursor-pointer flex items-center justify-between transition active:scale-98';
+        item.innerHTML = `
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-base flex-shrink-0">${p.emoji}</span>
+            <div class="min-w-0">
+              <span class="text-white text-xs font-bold block truncate leading-tight">${p.name}</span>
+              <span class="text-white/40 text-[10px] block truncate">${p.neighborhood}</span>
+            </div>
+          </div>
+          <span class="text-[10px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap ml-2">
+            ${p.distText}
+          </span>
+        `;
+
+        item.addEventListener('click', () => {
+          inputPandalName.value = p.name;
+          inputNeighborhood.value = p.neighborhood;
+          if (p.emoji && inputCategoryEmoji) inputCategoryEmoji.value = p.emoji;
+
+          // Reposition pin to this verified pandal
+          onCoordinatesUpdated(
+            { lat: p.lat, lng: p.lng },
+            'pandal_verified',
+            '🏛️ Pandal Coordinates',
+            'bg-amber-500/20 text-amber-300 border-amber-500/30',
+            'bg-amber-400',
+            `Aligned to verified coordinates of ${p.name}`
+          );
+
+          // Close dropdown
+          document.getElementById('pandal-dropdown-menu')?.classList.add('hidden');
+          showToast(`📍 Aligned map to "${p.name}"`);
+        });
+
+        listEl.appendChild(item);
+      });
+    }
+
+    /* ── Step 4: Interactive Mini-Map Pin Picker (Confirmation) ── */
+    function initOrUpdateMiniMap(coords) {
+      const container = document.getElementById('mini-map-picker');
+      const fallbackEl = document.getElementById('mini-map-fallback');
+      if (!container) return;
+
+      if (window.google?.maps?.Map) {
+        if (fallbackEl) fallbackEl.classList.add('hidden');
+
+        if (!miniMap) {
+          miniMap = new google.maps.Map(container, {
+            center: coords,
+            zoom: 16,
+            styles: DARK_MAP_STYLE,
+            disableDefaultUI: true,
+            zoomControl: true,
+            gestureHandling: 'greedy',
+            backgroundColor: '#0a0a14'
+          });
+
+          // Custom festive SVG pin
+          const pinSvg = 'data:image/svg+xml;utf-8,' + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="38" height="46" viewBox="0 0 38 46">
+              <path fill="#FF6B00" stroke="#FFFFFF" stroke-width="2" d="M19 2C9.6 2 2 9.6 2 19c0 12.2 15.6 24.8 16.2 25.3a1.3 1.3 0 0 0 1.6 0C20.4 43.8 36 31.2 36 19 36 9.6 28.4 2 19 2z"/>
+              <circle cx="19" cy="19" r="8" fill="#FFFFFF"/>
+              <circle cx="19" cy="19" r="5" fill="#C0392B"/>
+            </svg>
+          `);
+
+          miniMapMarker = new google.maps.Marker({
+            position: coords,
+            map: miniMap,
+            draggable: true,
+            title: 'Drag to adjust exact location',
+            icon: {
+              url: pinSvg,
+              scaledSize: new google.maps.Size(38, 46),
+              anchor: new google.maps.Point(19, 46)
+            },
+            animation: google.maps.Animation.DROP
+          });
+
+          // Pin Drag Listener (Fine-tune location)
+          miniMapMarker.addListener('dragend', (e) => {
+            const newLat = e.latLng.lat();
+            const newLng = e.latLng.lng();
+            onCoordinatesUpdated(
+              { lat: newLat, lng: newLng },
+              'manual_drag',
+              '🎯 Custom Pinned',
+              'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30',
+              'bg-fuchsia-400',
+              'Location fine-tuned manually by dragging the mini-map pin'
+            );
+            showToast('📍 Pin location updated');
+          });
+
+          // Map Click Listener (Instant re-anchor)
+          miniMap.addListener('click', (e) => {
+            const newLat = e.latLng.lat();
+            const newLng = e.latLng.lng();
+            miniMapMarker.setPosition(e.latLng);
+            onCoordinatesUpdated(
+              { lat: newLat, lng: newLng },
+              'manual_tap',
+              '🎯 Tap Pinned',
+              'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30',
+              'bg-fuchsia-400',
+              'Location repositioned by tapping on the mini-map'
+            );
+            showToast('📍 Pin repositioned');
+          });
+        } else {
+          miniMap.setCenter(coords);
+          miniMap.setZoom(16);
+          if (miniMapMarker) miniMapMarker.setPosition(coords);
+          setTimeout(() => {
+            google.maps.event.trigger(miniMap, 'resize');
+            miniMap.setCenter(coords);
+          }, 80);
+        }
+      } else {
+        // Fallback simulated mini-map
+        if (fallbackEl) {
+          fallbackEl.classList.remove('hidden');
+          const coordsText = document.getElementById('mini-fallback-coords');
+          if (coordsText) coordsText.textContent = `${coords.lat.toFixed(4)}° N, ${coords.lng.toFixed(4)}° E`;
+          fallbackEl.onclick = (e) => {
+            const rect = fallbackEl.getBoundingClientRect();
+            const relX = (e.clientX - rect.left) / rect.width - 0.5;
+            const relY = (e.clientY - rect.top) / rect.height - 0.5;
+            const adjustedLat = coords.lat - relY * 0.01;
+            const adjustedLng = coords.lng + relX * 0.01;
+            onCoordinatesUpdated(
+              { lat: adjustedLat, lng: adjustedLng },
+              'manual_tap',
+              '🎯 Custom Pin',
+              'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30',
+              'bg-fuchsia-400',
+              'Location adjusted on simulated map'
+            );
+          };
+        }
+      }
+    }
+
+    /* ── Central Coordinates Dispatcher ── */
+    function onCoordinatesUpdated(coords, source, badgeText, badgeClass, dotClass, desc) {
+      submissionCoords = { lat: coords.lat, lng: coords.lng };
+      userLocation = { lat: coords.lat, lng: coords.lng };
+
+      currentStrategyBadgeText = badgeText;
+      currentStrategyBadgeClass = badgeClass;
+
+      // Update UI Status Card
+      if (gpsStatusText) gpsStatusText.textContent = badgeText;
+      if (gpsMethodDesc) gpsMethodDesc.textContent = desc;
+      if (gpsStatusDot) gpsStatusDot.className = `w-2.5 h-2.5 rounded-full ${dotClass} animate-pulse flex-shrink-0`;
+      if (gpsStrategyBadge) {
+        gpsStrategyBadge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass} flex-shrink-0`;
+        gpsStrategyBadge.textContent = badgeText;
+      }
+
+      const coordsPreview = document.getElementById('gps-coords-preview');
+      if (coordsPreview) {
+        coordsPreview.textContent = `${coords.lat.toFixed(4)}° N, ${coords.lng.toFixed(4)}° E`;
+      }
+
+      // Sync Mini-Map Marker
+      if (miniMap && miniMapMarker) {
+        miniMapMarker.setPosition(coords);
+        miniMap.panTo(coords);
+      }
+
+      // Match nearest pandal and update list
+      const matchResult = matchNearestPandal(submissionCoords);
+      renderPandalAutoMatch(matchResult, source !== 'manual_drag' && source !== 'manual_tap' && source !== 'pandal_verified');
+      renderPandalDropdownList(matchResult.allSorted);
+
+      validateUploadForm();
+    }
+
+    /* ── Hybrid Waterfall Orchestration (Strategy 4) ── */
+    async function resolveHybridLocationWaterfall(file, isCameraTrigger) {
+      // If camera capture trigger was used, prioritize Live Hardware GPS
+      if (isCameraTrigger) {
+        try {
+          const liveLoc = await getLiveDeviceGps();
+          return liveLoc;
+        } catch (e) {
+          console.warn('Live GPS error during camera capture:', e);
+        }
+      }
+
+      // Step 1: EXIF Metadata Extraction (Primary for Gallery uploads)
+      try {
+        const exifLoc = await extractExifGps(file);
+        return exifLoc;
+      } catch (exifErr) {
+        console.log('EXIF GPS not found or stripped. Falling back to Step 2 (Live GPS)...', exifErr);
+      }
+
+      // Step 2: Live GPS Fallback (Secondary)
+      try {
+        const liveLoc = await getLiveDeviceGps();
+        return liveLoc;
+      } catch (liveErr) {
+        console.warn('Live GPS fallback unavailable. Falling back to City Center...', liveErr);
+      }
+
+      // Step 3: Agartala City Center Fallback
+      return getCityCenterFallback();
+    }
+
+    /* ── Photo / Video Selection Processing ── */
+    async function processPhotoSelection(file, source) {
+      if (!file) return;
+
+      const isVideo = file.type.startsWith('video');
+      capturedMediaType = isVideo ? 'video' : 'image';
+
+      // 1. Read preview image or video
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        capturedMediaData = e.target.result;
+        if (isVideo && uploadPreviewVideo) {
+          uploadPreviewVideo.src = capturedMediaData;
+          uploadPreviewVideo.classList.remove('hidden');
+          uploadPreviewImg.classList.add('hidden');
+        } else {
+          uploadPreviewImg.src = capturedMediaData;
+          uploadPreviewImg.classList.remove('hidden');
+          if (uploadPreviewVideo) uploadPreviewVideo.classList.add('hidden');
+        }
+        placeholderContent.classList.add('hidden');
+        document.getElementById('media-change-badge')?.classList.remove('hidden');
+        validateUploadForm();
+      };
+      reader.readAsDataURL(file);
+
+      // 2. Update status card
+      gpsStatusText.textContent = isVideo ? 'Resolving GPS for Video...' : 'Extracting EXIF GPS...';
+      gpsMethodDesc.textContent = isVideo ? 'Checking device background GPS...' : 'Analyzing EXIF tags from media file...';
+      gpsStatusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping flex-shrink-0';
+
+      // 3. Execute Waterfall Strategy 4
+      const locResult = await resolveHybridLocationWaterfall(file, source === 'camera');
+
+      onCoordinatesUpdated(
+        { lat: locResult.lat, lng: locResult.lng },
+        locResult.source,
+        locResult.badgeText,
+        locResult.badgeClass,
+        locResult.dotClass,
+        locResult.desc
+      );
+
+      // Center and render mini-map
+      setTimeout(() => {
+        initOrUpdateMiniMap(submissionCoords);
+      }, 150);
+
+      if (locResult.source === 'exif') {
+        showToast('📸 Extracted EXIF GPS from photo');
+      } else if (locResult.source === 'live_gps') {
+        showToast('📡 Using Live Device GPS');
+      } else {
+        showToast('📍 Using Agartala Center Fallback');
+      }
+    }
+
+    /* ── Wire Modal Triggers & Controls ── */
     floatingCamera.addEventListener('click', () => {
       if (!currentUser) {
         openGoogleAuthModal('Sign in with Google to snap pandal stories, anchor your GPS coordinates, and broadcast to the Agartala map.');
         return;
       }
       uploadModal.classList.add('active');
-      getLiveGPSLocation()
-        .then(loc => updateGpsUI(loc))
-        .catch(() => updateGpsUI(getFallbackLocation()));
+
+      // Default to live coordinates if available, or current user coords
+      const initialCoords = (typeof userLocation !== 'undefined' && userLocation) 
+        ? userLocation 
+        : (currentUserCoords || AGARTALA_CENTER);
+
+      onCoordinatesUpdated(
+        initialCoords,
+        'live_gps',
+        '📡 Live Device GPS',
+        'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+        'bg-emerald-400',
+        'Ready for media upload'
+      );
+
+      setTimeout(() => {
+        initOrUpdateMiniMap(submissionCoords);
+      }, 150);
     });
 
     btnCloseUpload.addEventListener('click', () => {
@@ -1818,178 +2535,49 @@
       galleryInput.click();
     });
 
-    /* ── STRATEGY A: Live GPS Capture via Geolocation API ── */
-    function getLiveGPSLocation() {
-      return new Promise((resolve, reject) => {
-        if (!('geolocation' in navigator)) {
-          return reject(new Error('Geolocation not supported by device'));
+    document.getElementById('preview-box')?.addEventListener('click', () => {
+      if (!capturedMediaData) {
+        if (!currentUser) {
+          openGoogleAuthModal('Sign in with Google to upload photos or videos.');
+          return;
         }
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            resolve({
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              strategy: 'Strategy A',
-              badge: 'Live GPS',
-              badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-              dotColor: 'bg-emerald-400',
-              description: 'Precise device GPS hardware',
-            });
-          },
-          (err) => {
-            console.warn('Live GPS error or permission denied:', err);
-            reject(err);
-          },
-          { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
-        );
-      });
-    }
-
-    /* ── STRATEGY B: EXIF Metadata Extraction via exif-js ── */
-    function extractExifLocation(file) {
-      return new Promise((resolve, reject) => {
-        if (!window.EXIF) {
-          return reject(new Error('EXIF.js not loaded'));
-        }
-
-        EXIF.getData(file, function() {
-          try {
-            const lat = EXIF.getTag(this, 'GPSLatitude');
-            const latRef = EXIF.getTag(this, 'GPSLatitudeRef') || 'N';
-            const lng = EXIF.getTag(this, 'GPSLongitude');
-            const lngRef = EXIF.getTag(this, 'GPSLongitudeRef') || 'E';
-
-            if (lat && lng && Array.isArray(lat) && Array.isArray(lng) && lat.length >= 3 && lng.length >= 3) {
-              const latitude = convertDMSToDD(lat[0], lat[1], lat[2], latRef);
-              const longitude = convertDMSToDD(lng[0], lng[1], lng[2], lngRef);
-
-              if (!isNaN(latitude) && !isNaN(longitude) && latitude !== 0 && longitude !== 0) {
-                return resolve({
-                  lat: latitude,
-                  lng: longitude,
-                  strategy: 'Strategy B',
-                  badge: 'EXIF Photo GPS',
-                  badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
-                  dotColor: 'bg-sky-400',
-                  description: 'Original camera EXIF metadata',
-                });
-              }
-            }
-            reject(new Error('No valid GPS EXIF metadata found in photo'));
-          } catch (err) {
-            reject(err);
-          }
-        });
-      });
-    }
-
-    /* Convert Degree-Minute-Second GPS coordinates to Decimal Degrees */
-    function convertDMSToDD(degrees, minutes, seconds, direction) {
-      const d = typeof degrees === 'object' && degrees.numerator ? (degrees.numerator / degrees.denominator) : Number(degrees);
-      const m = typeof minutes === 'object' && minutes.numerator ? (minutes.numerator / minutes.denominator) : Number(minutes);
-      const s = typeof seconds === 'object' && seconds.numerator ? (seconds.numerator / seconds.denominator) : Number(seconds);
-      let dd = d + (m / 60) + (s / 3600);
-      if (direction === 'S' || direction === 'W') {
-        dd = dd * -1;
+        galleryInput.click();
       }
-      return dd;
-    }
-
-    /* ── STRATEGY C: Default Agartala Center with Randomized Offset ── */
-    function getFallbackLocation() {
-      // Randomized offset to prevent complete marker overlap (~300m - 1km radius)
-      const offsetLat = (Math.random() - 0.5) * 0.018;
-      const offsetLng = (Math.random() - 0.5) * 0.018;
-      return {
-        lat: AGARTALA_CENTER.lat + offsetLat,
-        lng: AGARTALA_CENTER.lng + offsetLng,
-        strategy: 'Strategy C',
-        badge: 'Agartala Fallback',
-        badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-        dotColor: 'bg-amber-400',
-        description: 'Default Agartala center (Randomized offset)',
-      };
-    }
-
-    /* ── Update GPS Info in Upload UI (no raw coords shown) ── */
-    function updateGpsUI(loc) {
-      // Store location silently — never expose raw lat/lng in UI
-      userLocation = { lat: loc.lat, lng: loc.lng };
-
-      // Update clean status indicators only
-      if (gpsStatusText) gpsStatusText.textContent = `📍 ${loc.badge}`;
-      if (gpsMethodDesc) gpsMethodDesc.textContent = loc.description;
-      if (gpsStatusDot) gpsStatusDot.className = `w-2.5 h-2.5 rounded-full ${loc.dotColor} animate-pulse`;
-      if (gpsStrategyBadge) {
-        gpsStrategyBadge.className = `px-2.5 py-1 rounded-full text-[10px] font-bold border ${loc.badgeColor}`;
-        gpsStrategyBadge.textContent = `📍 ${loc.badge}`;
-      }
-    }
-
-    /* ── Image & Video Selection & Geotag Orchestration ── */
-    async function processPhotoSelection(file, source) {
-      if (!file) return;
-
-      const isVideo = file.type.startsWith('video');
-      capturedMediaType = isVideo ? 'video' : 'image';
-
-      // 1. Read preview image or video
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        capturedMediaData = e.target.result;
-        if (isVideo && uploadPreviewVideo) {
-          uploadPreviewVideo.src = capturedMediaData;
-          uploadPreviewVideo.classList.remove('hidden');
-          uploadPreviewImg.classList.add('hidden');
-        } else {
-          uploadPreviewImg.src = capturedMediaData;
-          uploadPreviewImg.classList.remove('hidden');
-          if (uploadPreviewVideo) uploadPreviewVideo.classList.add('hidden');
-        }
-        placeholderContent.classList.add('hidden');
-        validateUploadForm();
-      };
-      reader.readAsDataURL(file);
-
-      // 2. Geotagging Strategy Execution
-      gpsStatusText.textContent = 'Analyzing Location...';
-      gpsMethodDesc.textContent = 'Resolving geotag coordinates...';
-
-      if (source === 'camera' || isVideo) {
-        /* Strategy A: Live GPS Capture Primary for Camera Shots & Videos */
-        try {
-          const liveLoc = await getLiveGPSLocation();
-          updateGpsUI(liveLoc);
-          showToast('📍 Live GPS coordinates attached');
-        } catch {
-          const fallbackLoc = getFallbackLocation();
-          updateGpsUI(fallbackLoc);
-          showToast('📍 GPS unavailable — Agartala center used');
-        }
-      } else {
-        /* Strategy B: EXIF Metadata Extraction Primary for Gallery Uploads */
-        try {
-          const exifLoc = await extractExifLocation(file);
-          updateGpsUI(exifLoc);
-          showToast('📸 Extracted EXIF GPS from photo');
-        } catch {
-          try {
-            const liveLoc = await getLiveGPSLocation();
-            updateGpsUI(liveLoc);
-            showToast('📍 No EXIF found — Attached device GPS');
-          } catch {
-            const fallbackLoc = getFallbackLocation();
-            updateGpsUI(fallbackLoc);
-            showToast('📍 No GPS found — Agartala center used');
-          }
-        }
-      }
-    }
+    });
 
     cameraInput.addEventListener('change', (e) => processPhotoSelection(e.target.files[0], 'camera'));
     galleryInput.addEventListener('change', (e) => processPhotoSelection(e.target.files[0], 'gallery'));
 
-    inputPandalName.addEventListener('input', validateUploadForm);
+    // Dropdown toggle
+    const btnToggleDropdown = document.getElementById('btn-toggle-pandal-dropdown');
+    const dropdownMenu = document.getElementById('pandal-dropdown-menu');
+
+    btnToggleDropdown?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu?.classList.toggle('hidden');
+    });
+
+    inputPandalName?.addEventListener('focus', () => {
+      dropdownMenu?.classList.remove('hidden');
+    });
+
+    inputPandalName?.addEventListener('input', () => {
+      const query = inputPandalName.value.trim().toLowerCase();
+      const matchResult = matchNearestPandal(submissionCoords);
+      const filtered = query.length === 0 
+        ? matchResult.allSorted 
+        : matchResult.allSorted.filter(p => p.name.toLowerCase().includes(query) || p.neighborhood.toLowerCase().includes(query));
+      renderPandalDropdownList(filtered);
+      dropdownMenu?.classList.remove('hidden');
+      validateUploadForm();
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#pandal-dropdown-menu') && e.target !== inputPandalName && e.target !== btnToggleDropdown) {
+        dropdownMenu?.classList.add('hidden');
+      }
+    });
 
     function validateUploadForm() {
       const hasMedia = !!capturedMediaData;
@@ -2011,7 +2599,6 @@
         map.panTo({ lat: newSnap.lat, lng: newSnap.lng });
         map.setZoom(16);
       } else {
-        // Update simulated canvas if active
         renderSimulatedMarkers();
       }
 
@@ -2020,7 +2607,7 @@
       updateNearbyList();
     }
 
-    /* ── Submit New Snap Post (Tagged with Authenticated Google User) ── */
+    /* ── Step 5: Submit New Snap Post (Tagged with Authenticated Google User) ── */
     btnSubmitSnap.addEventListener('click', async () => {
       if (!currentUser) {
         uploadModal.classList.remove('active');
@@ -2045,9 +2632,10 @@
         uploader: currentUser.displayName,
         avatar: currentUser.photoURL,
         imageUrl: capturedMediaData || '/pandal1.jpg',
-        coordinates: { lat: userLocation.lat, lng: userLocation.lng },
-        lat: userLocation.lat,
-        lng: userLocation.lng,
+        coordinates: { lat: submissionCoords.lat, lng: submissionCoords.lng },
+        lat: submissionCoords.lat,
+        lng: submissionCoords.lng,
+        locationSource: currentStrategyBadgeText,
         timestamp: new Date().toISOString(),
         time: 'Just now',
         likes: 1,
@@ -2075,15 +2663,20 @@
         uploadPreviewVideo.classList.add('hidden');
       }
       placeholderContent.classList.remove('hidden');
+      document.getElementById('media-change-badge')?.classList.add('hidden');
+      document.getElementById('pandal-match-banner')?.classList.add('hidden');
       btnSubmitSnap.disabled = true;
 
       showToast(`🎉 "${pandalName}" tagged with ${(currentUser.displayName || 'Devotee').split(' ')[0]} & broadcasted live!`);
     });
 
     /* ── Recenter Map Button (Pans to Live User Location) ── */
-    document.getElementById('btn-recenter').addEventListener('click', () => {
+    document.getElementById('btn-recenter')?.addEventListener('click', () => {
+      const targetLoc = (typeof userLocation !== 'undefined' && userLocation) 
+        ? userLocation 
+        : ((typeof currentUserCoords !== 'undefined' && currentUserCoords) ? currentUserCoords : { lat: 23.8315, lng: 91.2868 });
       if (map) {
-        map.panTo(currentUserCoords);
+        map.panTo(targetLoc);
         map.setZoom(15);
         showToast('📍 Centered on your live position');
       } else {
@@ -2091,16 +2684,15 @@
       }
     });
 
-    /* ── Live Viewer Random Simulator ── */
-    setInterval(() => {
-      const countEl = document.getElementById('live-users-count');
-      if (countEl) {
-        const delta = Math.floor(Math.random() * 5) - 2;
-        let count = parseInt(countEl.textContent, 10) || 142;
-        count = Math.max(118, count + delta);
-        countEl.textContent = `${count} live`;
+    /* ── Profile Chip Click Handler ── */
+    document.getElementById('user-profile-chip')?.addEventListener('click', (e) => {
+      if (e.target.id === 'btn-signout' || e.target.closest('#btn-signout')) return;
+      if (currentUser) {
+        showToast(`👤 Signed in as ${currentUser.displayName || 'Devotee'}`);
+      } else {
+        openGoogleAuthModal('Sign in with Google to personalize your Puja Parikrama experience.');
       }
-    }, 4500);
+    });
 
     /* ── Initial Render ── */
     renderRecentSnapsList();
