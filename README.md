@@ -31,19 +31,56 @@ A mobile-first, Snapchat Map-style web application centered on **Agartala, Tripu
 
 ---
 
-## 🔑 Google Maps API Key Setup
+## 🔑 Google Maps & Firebase Authentication Setup
 
-To activate the live Google Maps satellite/street tiles:
-
+### 1. Google Maps JavaScript API
 1. Obtain an API key from the [Google Cloud Console](https://console.cloud.google.com/google/maps-apis).
 2. Enable the **Maps JavaScript API**.
 3. In [index.html](file:///Users/shatadrusarkar/Documents/Web%20Apps/Durga-Puja/index.html), replace `YOUR_GOOGLE_MAPS_API_KEY`:
    ```html
    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>
    ```
-4. In [src/App.tsx](file:///Users/shatadrusarkar/Documents/Web%20Apps/Durga-Puja/src/App.tsx), update `MAPS_API_KEY`:
-   ```ts
-   const MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY'
-   ```
 
-> **Note:** The app includes an automatic fallback preview canvas so all interactive features (pins, story modal, camera upload, drawer, and live simulation) can be tested immediately even before setting up a paid Google Cloud key.
+### 2. Firebase & Google Sign-In Setup
+1. Create a project at [Firebase Console](https://console.firebase.google.com/).
+2. Enable **Authentication** -> **Sign-in method** -> **Google**.
+3. Enable **Cloud Firestore** in test or production mode with a `snaps` collection.
+4. Add a Web App in Firebase Project Settings and paste your credentials in `firebaseConfig` in [index.html](file:///Users/shatadrusarkar/Documents/Web%20Apps/Durga-Puja/index.html):
+   ```javascript
+   const firebaseConfig = {
+     apiKey: "YOUR_FIREBASE_API_KEY",
+     authDomain: "your-project.firebaseapp.com",
+     projectId: "your-project",
+     storageBucket: "your-project.firebasestorage.app",
+     messagingSenderId: "123456789012",
+     appId: "1:123456789012:web:abcdef1234567890"
+   };
+   ```
+> **Note:** The app includes an automatic fallback simulation mode so all features (Google Sign-In popup, profile tagging, photo & video stories, dynamic map markers, and feed sync) work immediately out-of-the-box for instant local testing even before configuring production keys!
+
+---
+
+## 🛠️ Troubleshooting: "Cannot find module '@vitejs/plugin-react'"
+
+If your IDE reports:
+`Cannot find module '@vitejs/plugin-react' or its corresponding type declarations. @[vite.config.ts:L1]`
+
+### Why this happens:
+- `@vitejs/plugin-react` is declared in [package.json](file:///Users/shatadrusarkar/Documents/Web%20Apps/Durga-Puja/package.json), but project dependencies have **not yet been installed** (the `node_modules/` folder does not exist).
+- Furthermore, Node.js / `npm` may not be installed or configured in your terminal's `$PATH`.
+
+### Solution:
+1. **Install Node.js (LTS)**:
+   - On macOS with Homebrew:
+     ```bash
+     brew install node
+     ```
+   - Or download directly from [nodejs.org](https://nodejs.org).
+2. **Install dependencies**:
+   ```bash
+   cd "/Users/shatadrusarkar/Documents/Web Apps/Durga-Puja"
+   npm install
+   ```
+3. Once `npm install` runs, `node_modules/@vitejs/plugin-react` is populated, the TypeScript language server resolves the type declarations, and the red squiggly in [vite.config.ts](file:///Users/shatadrusarkar/Documents/Web%20Apps/Durga-Puja/vite.config.ts) disappears.
+4. **Standalone App Note**: You can also run the full mobile app right away simply by opening [index.html](file:///Users/shatadrusarkar/Documents/Web%20Apps/Durga-Puja/index.html) directly in any browser (or using Live Server), requiring zero build tools!
+

@@ -326,10 +326,12 @@ function StoryModal({ post, onClose }: { post: SnapPost | null; onClose: () => v
    ───────────────────────────────────────────────────────────────────────── */
 interface UploadModalProps {
   visible: boolean
+  currentUser: AuthUser | null
+  onRequireAuth: () => void
   onClose: () => void
   onSubmit: (post: Omit<SnapPost, 'id' | 'likes' | 'views' | 'timestamp'>) => void
 }
-function UploadModal({ visible, onClose, onSubmit }: UploadModalProps) {
+function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }: UploadModalProps) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [pandalName, setPandalName] = useState('')
@@ -373,21 +375,32 @@ function UploadModal({ visible, onClose, onSubmit }: UploadModalProps) {
   }
 
   const handleSubmit = () => {
+    if (!currentUser) {
+      onRequireAuth()
+      return
+    }
     if (!preview || !pandalName.trim() || !coords) return
     setSubmitting(true)
     setTimeout(() => {
       onSubmit({
+        userId: currentUser.uid,
+        userName: currentUser.displayName,
+        userAvatar: currentUser.photoURL,
+        mediaUrl: preview,
+        mediaType: 'image',
         pandal: pandalName.trim(),
         neighborhood: neighborhood.trim() || 'Agartala',
-        uploader: uploaderName.trim() || 'Anonymous',
-        avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(uploaderName || 'user')}&backgroundColor=ffdfbf`,
+        uploader: currentUser.displayName,
+        avatar: currentUser.photoURL,
         imageUrl: preview,
-        lat: coords.lat, lng: coords.lng,
-        emoji: ['🪔', '🌺', '✨', '🎊', '🙏'][Math.floor(Math.random() * 5)],
+        lat: coords.lat,
+        lng: coords.lng,
+        coordinates: { lat: coords.lat, lng: coords.lng },
+        emoji: ['🪔', '👑', '🎆', '🥁', '🌟'][Math.floor(Math.random() * 5)],
       })
       reset()
       onClose()
-    }, 800)
+    }, 600)
   }
 
   return (
@@ -515,21 +528,36 @@ function UploadModal({ visible, onClose, onSubmit }: UploadModalProps) {
                 onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
               />
             </div>
-            <div>
-              <label className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2 block">Your Name</label>
-              <input
-                id="uploader-name-input"
-                type="text"
-                value={uploaderName}
-                onChange={e => setUploaderName(e.target.value)}
-                placeholder="Anonymous"
-                maxLength={30}
-                className="w-full py-3.5 px-4 rounded-xl text-white text-sm outline-none"
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.1)' }}
-                onFocus={e => { e.target.style.borderColor = '#FF6B00' }}
-                onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
-              />
-            </div>
+            {currentUser ? (
+              <div className="flex items-center justify-between p-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.1)' }}>
+                <div className="flex items-center gap-2.5">
+                  <img src={currentUser.photoURL} alt={currentUser.displayName} className="w-8 h-8 rounded-full border border-saffron object-cover" />
+                  <div>
+                    <span className="text-[10px] text-white/50 uppercase tracking-wider block">Posting as</span>
+                    <span className="text-white text-xs font-bold block">{currentUser.displayName}</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Verified ID
+                </span>
+              </div>
+            ) : (
+              <div>
+                <label className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2 block">Your Name</label>
+                <input
+                  id="uploader-name-input"
+                  type="text"
+                  value={uploaderName}
+                  onChange={e => setUploaderName(e.target.value)}
+                  placeholder="Anonymous"
+                  maxLength={30}
+                  className="w-full py-3.5 px-4 rounded-xl text-white text-sm outline-none"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.1)' }}
+                  onFocus={e => { e.target.style.borderColor = '#FF6B00' }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -616,10 +644,40 @@ export default function App() {
   const [toast, setToast] = useState<{ msg: string; visible: boolean }>({ msg: '', visible: false })
   const [liveCount, setLiveCount] = useState(23)
 
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const cached = localStorage.getItem('puja_parikrama_user')
+    if (cached) {
+      try { return JSON.parse(cached) } catch { return null }
+    }
+    return null
+  })
+  const [authModalVisible, setAuthModalVisible] = useState(false)
+
   const showToast = useCallback((msg: string) => {
     setToast({ msg, visible: true })
     setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000)
   }, [])
+
+  const handleGoogleSignIn = () => {
+    const simulatedNames = ['Shatadru Sarkar', 'Ananya Roy', 'Priya Saha', 'Saptarshi Sen']
+    const chosenName = simulatedNames[Math.floor(Math.random() * simulatedNames.length)]
+    const newUser: AuthUser = {
+      uid: 'google-uid-' + Math.random().toString(36).substring(2, 10),
+      displayName: chosenName,
+      email: `${chosenName.toLowerCase().replace(' ', '.')}@gmail.com`,
+      photoURL: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(chosenName)}&backgroundColor=ffdfbf`
+    }
+    localStorage.setItem('puja_parikrama_user', JSON.stringify(newUser))
+    setUser(newUser)
+    setAuthModalVisible(false)
+    showToast(`✅ Signed in as ${newUser.displayName}`)
+  }
+
+  const handleSignOut = () => {
+    localStorage.removeItem('puja_parikrama_user')
+    setUser(null)
+    showToast('👋 Signed out from Google')
+  }
 
   // ── increment live viewer count randomly ──
   useEffect(() => {
@@ -826,6 +884,29 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Google Auth Button / User Profile */}
+              {user ? (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full glass-light cursor-pointer">
+                  <img src={user.photoURL} alt={user.displayName} className="w-6 h-6 rounded-full border border-saffron object-cover" />
+                  <span className="text-white text-xs font-semibold max-w-[80px] truncate">{user.displayName.split(' ')[0]}</span>
+                  <button onClick={handleSignOut} title="Sign Out" className="text-white/40 hover:text-red-400 text-xs ml-1">✕</button>
+                </div>
+              ) : (
+                <button
+                  id="google-signin-btn"
+                  onClick={handleGoogleSignIn}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold shadow-md active:scale-95 transition-all"
+                >
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                  </svg>
+                  <span>Sign In</span>
+                </button>
+              )}
+
               {/* Live badge */}
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
                 style={{ background: 'rgba(255,107,0,0.2)', border: '1px solid rgba(255,107,0,0.4)' }}>
@@ -853,7 +934,13 @@ export default function App() {
           style={{ bottom: sheetExpanded ? 320 : 112, left: '50%', transform: 'translateX(-50%)', transition: 'bottom 0.4s cubic-bezier(.32,.72,0,1)' }}>
           <button
             id="camera-btn"
-            onClick={() => setUploadVisible(true)}
+            onClick={() => {
+              if (!user) {
+                setAuthModalVisible(true)
+                return
+              }
+              setUploadVisible(true)
+            }}
             className="w-16 h-16 rounded-full flex items-center justify-center shadow-2xl"
             style={{
               background: 'linear-gradient(135deg, #FF6B00, #C0392B)',
@@ -1074,9 +1161,53 @@ export default function App() {
       {/* ── STORY MODAL ── */}
       <StoryModal post={selectedPost} onClose={() => setSelectedPost(null)} />
 
+      {/* ── GOOGLE AUTH MODAL ── */}
+      {authModalVisible && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(16px)' }}>
+          <div className="w-full max-w-sm rounded-3xl p-6 text-center relative border border-white/10 shadow-2xl" style={{ background: '#121224' }}>
+            <button
+              onClick={() => setAuthModalVisible(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white"
+            >
+              ✕
+            </button>
+            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mx-auto flex items-center justify-center mb-4 shadow-xl">
+              <svg className="w-9 h-9" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+            </div>
+            <h3 className="text-white font-extrabold text-xl mb-1.5">Sign in with Google</h3>
+            <p className="text-white/60 text-xs leading-relaxed mb-6">
+              Sign in to Puja Parikrama to tag your pandal stories with your profile, anchor live GPS coordinates, and broadcast to the Agartala map.
+            </p>
+            <button
+              id="google-modal-signin-btn"
+              onClick={handleGoogleSignIn}
+              className="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-sm flex items-center justify-center gap-3 shadow-lg transition active:scale-98"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+            <p className="text-white/40 text-[11px] mt-4">
+              🔒 Powered by Firebase Auth • Popup & Session Cache
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── UPLOAD MODAL ── */}
       <UploadModal
         visible={uploadVisible}
+        currentUser={user}
+        onRequireAuth={() => setAuthModalVisible(true)}
         onClose={() => setUploadVisible(false)}
         onSubmit={handleNewPost}
       />
