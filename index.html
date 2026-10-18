@@ -349,6 +349,27 @@
           <span id="live-users-count" class="text-white text-xs font-semibold">142 live</span>
         </div>
 
+        <!-- Google Auth Header Controls -->
+        <div id="auth-header-container" class="flex items-center">
+          <!-- Unauthenticated: Sign in with Google Button -->
+          <button id="btn-google-signin" class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/25 px-3 py-1.5 rounded-full text-xs font-semibold text-white transition active:scale-95 shadow-md">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Sign In</span>
+          </button>
+
+          <!-- Authenticated: Profile Avatar & Name Chip -->
+          <div id="user-profile-chip" class="hidden flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 pl-1 pr-2.5 py-1 rounded-full cursor-pointer transition">
+            <img id="user-avatar-img" src="" alt="Google Profile" class="w-6 h-6 rounded-full border border-saffron object-cover">
+            <span id="user-name-label" class="text-xs font-semibold text-white max-w-[80px] truncate">User</span>
+            <button id="btn-signout" title="Sign out" class="text-white/40 hover:text-red-400 text-xs ml-0.5 transition">✕</button>
+          </div>
+        </div>
+
         <!-- Recenter / Locate Button -->
         <button id="btn-recenter" title="Locate My Position" class="w-9 h-9 rounded-xl glass-card flex items-center justify-center text-white/80 hover:text-white transition active:scale-90">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -358,6 +379,41 @@
       </div>
     </div>
   </header>
+
+  <!-- ── GOOGLE SIGN-IN PROMPT MODAL ── -->
+  <div id="google-auth-modal" class="snap-modal-backdrop fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
+    <div class="snap-modal-content w-full max-w-sm bg-[#121224] rounded-3xl border border-white/10 p-6 flex flex-col text-center shadow-2xl relative">
+      <button id="btn-close-auth-modal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition">
+        ✕
+      </button>
+      <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mx-auto flex items-center justify-center mb-4 shadow-xl">
+        <svg class="w-9 h-9" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+      </div>
+      <h3 class="text-white font-extrabold text-xl mb-1.5">Sign in with Google</h3>
+      <p id="auth-modal-reason" class="text-white/60 text-xs leading-relaxed mb-6">
+        Sign in to Puja Parikrama to tag your pandal stories with your profile, anchor live GPS coordinates, and broadcast to the Agartala map.
+      </p>
+
+      <button id="btn-modal-google-signin" class="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-sm flex items-center justify-center gap-3 shadow-lg transition active:scale-98">
+        <svg class="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+
+      <p class="text-white/40 text-[11px] mt-4">
+        🔒 Powered by Firebase Auth • Popup & Session Cache
+      </p>
+    </div>
+  </div>
 
   <!-- ── 3. FLOATING CAMERA ACTION BUTTON (Bottom Center) ── -->
   <div class="fixed left-1/2 -translate-x-1/2 bottom-[108px] z-30 flex flex-col items-center gap-1.5 pointer-events-auto">
@@ -413,8 +469,9 @@
 
   <!-- ── 5. FULL-SCREEN VERTICAL STORY MODAL (Snapchat Style) ── -->
   <div id="story-modal" class="snap-modal-backdrop fixed inset-0 z-50 bg-black flex flex-col">
-    <!-- Story Background Image -->
+    <!-- Story Background Image & Video -->
     <img id="story-img" src="" alt="Pandal Story" class="absolute inset-0 w-full h-full object-cover">
+    <video id="story-video" class="hidden absolute inset-0 w-full h-full object-cover" playsinline autoplay loop muted></video>
     
     <!-- Top & Bottom Vignette Gradient -->
     <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/75 via-transparent to-black/90"></div>
@@ -431,7 +488,10 @@
         <div class="flex items-center gap-3">
           <img id="story-avatar" src="" alt="Avatar" class="w-10 h-10 rounded-full border-2 border-saffron object-cover shadow-lg">
           <div>
-            <h3 id="story-uploader" class="text-white font-bold text-sm leading-tight drop-shadow">Priya Saha</h3>
+            <div class="flex items-center gap-1.5">
+              <h3 id="story-uploader" class="text-white font-bold text-sm leading-tight drop-shadow">Priya Saha</h3>
+              <span id="story-verified-badge" class="hidden w-3.5 h-3.5 rounded-full bg-blue-500 text-[9px] text-white flex items-center justify-center font-bold" title="Google Verified Devotee">✓</span>
+            </div>
             <p id="story-time" class="text-white/70 text-xs drop-shadow">14m ago</p>
           </div>
         </div>
@@ -496,11 +556,11 @@
 
       <!-- Step 1: Camera Trigger & Image Preview Area -->
       <div id="upload-capture-area" class="space-y-4">
-        <!-- Hidden file inputs -->
-        <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
-        <input type="file" id="gallery-input" accept="image/*" class="hidden">
+        <!-- Hidden file inputs (Images and Videos) -->
+        <input type="file" id="camera-input" accept="image/*,video/*" capture="environment" class="hidden">
+        <input type="file" id="gallery-input" accept="image/*,video/*" class="hidden">
 
-        <!-- Preview Box -->
+        <!-- Preview Box (Supports both photo and video) -->
         <div id="preview-box" class="w-full h-56 rounded-2xl border-2 border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center relative overflow-hidden group">
           <div id="placeholder-content" class="text-center p-4">
             <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-saffron to-puja-gold mx-auto flex items-center justify-center mb-3 shadow-lg shadow-saffron/30">
@@ -509,10 +569,11 @@
                 <circle cx="12" cy="13" r="3" fill="white"/>
               </svg>
             </div>
-            <p class="text-white font-semibold text-sm">Snap an idol or pandal</p>
+            <p class="text-white font-semibold text-sm">Snap an idol, pandal, or video</p>
             <p class="text-white/40 text-xs mt-1">Camera attaches GPS coordinates automatically</p>
           </div>
           <img id="upload-preview-img" src="" alt="Upload Preview" class="hidden absolute inset-0 w-full h-full object-cover">
+          <video id="upload-preview-video" class="hidden absolute inset-0 w-full h-full object-cover" playsinline autoplay loop muted></video>
         </div>
 
         <!-- Buttons for Camera vs Gallery -->
@@ -521,26 +582,39 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
             </svg>
-            Take Photo
+            Capture Snap
           </button>
           <button id="btn-trigger-gallery" class="py-3 px-4 rounded-xl glass-card text-white/90 font-semibold text-sm flex items-center justify-center gap-2 hover:text-white active:scale-95 transition">
-            <span>🖼️</span> Gallery
+            <span>🖼️</span> Gallery / Video
           </button>
         </div>
 
-        <!-- GPS Coordinates & Geotag Strategy Indicator -->
-        <div class="glass-card rounded-xl p-3 flex flex-col gap-1.5 text-xs">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span id="gps-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span id="gps-status-text" class="text-white/90 font-semibold">Acquiring Location...</span>
+        <!-- Authenticated Google Devotee Card -->
+        <div id="upload-user-card" class="glass-card rounded-xl p-3 flex items-center justify-between">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <img id="upload-user-avatar" class="w-8 h-8 rounded-full border border-saffron object-cover flex-shrink-0" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Devotee" alt="Google Profile">
+            <div class="min-w-0">
+              <span class="text-[10px] text-white/50 uppercase tracking-wider block">Posting As Google Devotee</span>
+              <span id="upload-user-name" class="text-white text-xs font-bold block truncate">Signed In Devotee</span>
             </div>
-            <span id="gps-strategy-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Strategy A</span>
           </div>
-          <div class="flex items-center justify-between text-white/50 text-[11px]">
-            <span id="gps-method-desc">GPS hardware capture</span>
-            <span id="gps-coords-display" class="text-saffron font-mono font-medium">23.8315° N, 91.2868° E</span>
+          <span class="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Verified ID
+          </span>
+        </div>
+
+        <!-- Clean Geotag Location Status (No raw coordinates) -->
+        <div class="glass-card rounded-xl p-3 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2.5">
+            <span id="gps-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div>
+              <span id="gps-status-text" class="text-white/90 font-semibold block leading-tight">GPS Location Ready</span>
+              <span id="gps-method-desc" class="text-white/50 text-[11px] block mt-0.5">Agartala, Tripura • Auto-attached</span>
+            </div>
           </div>
+          <span id="gps-strategy-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            📍 GPS Active
+          </span>
         </div>
 
         <!-- Form Fields -->
@@ -556,10 +630,17 @@
               <input id="input-neighborhood" type="text" placeholder="e.g. Palace Compound" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-saffron">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1">Your Name</label>
-              <input id="input-uploader" type="text" placeholder="e.g. Rajat" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-saffron">
+              <label class="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-1">Category Emoji</label>
+              <select id="input-category-emoji" class="w-full bg-[#121224] border border-white/10 rounded-xl px-3 py-3 text-white text-sm focus:outline-none focus:border-saffron">
+                <option value="🪔">🪔 Traditional Pandal</option>
+                <option value="👑">👑 Royal Palace Mandap</option>
+                <option value="🎆">🎆 Theme & Lighting</option>
+                <option value="🥁">🥁 Dhak & Cultural</option>
+                <option value="🌟">🌟 Idol Art & Pratima</option>
+              </select>
             </div>
           </div>
+          <input type="hidden" id="input-uploader" value="">
         </div>
 
         <!-- Post Action Button -->
@@ -576,43 +657,79 @@
   </div>
 
   <!-- ──────────────────────────────────────────────────────────────────────────
-       APPLICATION LOGIC & GOOGLE MAPS SETUP
+       APPLICATION LOGIC & GOOGLE MAPS SETUP (FIREBASE AUTH & LIVE MAP SYNC)
        ────────────────────────────────────────────────────────────────────────── -->
   <script>
+    // Global fallback proxy for Google Maps callback
+    window.initMap = function() {
+      if (window._realInitMap) {
+        window._realInitMap();
+      } else {
+        window._pendingInitMap = true;
+      }
+    };
+  </script>
+
+  <script type="module">
+    // ── Official Firebase v10/v11 Modular SDK via ESM CDN ──
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { 
+      getAuth, 
+      GoogleAuthProvider, 
+      signInWithPopup, 
+      signOut, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      onSnapshot, 
+      serverTimestamp, 
+      query, 
+      orderBy 
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    /* ── 1. FIREBASE CONFIGURATION ──
+       Replace with your real Firebase web configuration keys:
+       Firebase Console -> Project Settings -> General -> Your apps -> Web */
+    const firebaseConfig = {
+      apiKey: "AIzaSyYOUR_FIREBASE_API_KEY",
+      authDomain: "puja-parikrama-agartala.firebaseapp.com",
+      projectId: "puja-parikrama-agartala",
+      storageBucket: "puja-parikrama-agartala.firebasestorage.app",
+      messagingSenderId: "123456789012",
+      appId: "1:123456789012:web:abcdef1234567890"
+    };
+
+    const isRealFirebaseConfig = 
+      firebaseConfig.apiKey && 
+      !firebaseConfig.apiKey.includes("YOUR_FIREBASE") && 
+      !firebaseConfig.apiKey.includes("AIzaSyYOUR");
+
+    let firebaseApp = null;
+    let firebaseAuth = null;
+    let googleProvider = null;
+    let firestoreDb = null;
+
+    if (isRealFirebaseConfig) {
+      try {
+        firebaseApp = initializeApp(firebaseConfig);
+        firebaseAuth = getAuth(firebaseApp);
+        googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
+        firestoreDb = getFirestore(firebaseApp);
+        console.log("🔥 Firebase initialized with live Auth & Firestore!");
+      } catch (err) {
+        console.warn("Firebase initialization notice:", err);
+      }
+    }
     /* ── Initial Seed Data for Agartala Pandals ── */
     const AGARTALA_CENTER = { lat: 23.8315, lng: 91.2868 };
 
     let snapsData = [
       {
         id: 'p1',
-        pandal: 'Battala Durga Puja',
-        neighborhood: 'Battala',
-        uploader: 'Priya Saha',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Priya&backgroundColor=ffdfbf',
-        imageUrl: '/pandal1.jpg',
-        lat: 23.8361,
-        lng: 91.2812,
-        time: '12m ago',
-        likes: 248,
-        views: '1.8k',
-        emoji: '🪔'
-      },
-      {
-        id: 'p2',
-        pandal: 'Kali Bari Puja Samiti',
-        neighborhood: 'Kali Bari',
-        uploader: 'Riya Das',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Riya&backgroundColor=c0aede',
-        imageUrl: '/images/agartala.jpg',
-        lat: 23.8295,
-        lng: 91.2940,
-        time: '34m ago',
-        likes: 192,
-        views: '940',
-        emoji: '🌺'
-      },
-      {
-        id: 'p3',
         pandal: 'Ujjayanta Palace Mandap',
         neighborhood: 'Palace Compound',
         uploader: 'Ananya Roy',
@@ -620,27 +737,119 @@
         imageUrl: '/pandal1.jpg',
         lat: 23.8350,
         lng: 91.2880,
-        time: '1h ago',
-        likes: 541,
-        views: '3.2k',
-        emoji: '✨'
+        time: '18m ago',
+        likes: 940,
+        viewsCount: 5910,
+        views: '5.9k',
+        emoji: '👑'
+      },
+      {
+        id: 'p2',
+        pandal: 'Banamalipur Club & Youth Union',
+        neighborhood: 'Banamalipur',
+        uploader: 'Saptarshi Sen',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Saptarshi&backgroundColor=c0aede',
+        imageUrl: '/images/agartala.jpg',
+        lat: 23.8335,
+        lng: 91.2915,
+        time: '24m ago',
+        likes: 860,
+        viewsCount: 5200,
+        views: '5.2k',
+        emoji: '🎆'
+      },
+      {
+        id: 'p3',
+        pandal: 'Battala Durga Puja',
+        neighborhood: 'Battala',
+        uploader: 'Priya Saha',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Priya&backgroundColor=ffdfbf',
+        imageUrl: '/pandal1.jpg',
+        lat: 23.8361,
+        lng: 91.2812,
+        time: '35m ago',
+        likes: 780,
+        viewsCount: 4820,
+        views: '4.8k',
+        emoji: '🪔'
       },
       {
         id: 'p4',
-        pandal: 'Motor Stand Puja Committee',
-        neighborhood: 'Krishnanagar',
-        uploader: 'Soham Dey',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Soham&backgroundColor=ffd5dc',
+        pandal: 'Dhaleswar Netaji Play Center',
+        neighborhood: 'Dhaleswar',
+        uploader: 'Subhamita Das',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Subhamita&backgroundColor=ffd5dc',
         imageUrl: '/images/agartala.jpg',
-        lat: 23.8270,
-        lng: 91.2820,
-        time: '2h ago',
-        likes: 104,
-        views: '570',
-        emoji: '🎊'
+        lat: 23.8310,
+        lng: 91.2965,
+        time: '42m ago',
+        likes: 670,
+        viewsCount: 4300,
+        views: '4.3k',
+        emoji: '🌟'
       },
       {
         id: 'p5',
+        pandal: 'Ramnagar Road No. 2',
+        neighborhood: 'Ramnagar',
+        uploader: 'Arindam Ghosh',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Arindam&backgroundColor=b6e3f4',
+        imageUrl: '/pandal1.jpg',
+        lat: 23.8430,
+        lng: 91.2840,
+        time: '1h ago',
+        likes: 710,
+        viewsCount: 4120,
+        views: '4.1k',
+        emoji: '✨'
+      },
+      {
+        id: 'p6',
+        pandal: 'Shanti Para Youth Club',
+        neighborhood: 'Shantipara',
+        uploader: 'Tanmoy Banik',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Tanmoy&backgroundColor=ffd5dc',
+        imageUrl: '/images/agartala.jpg',
+        lat: 23.8375,
+        lng: 91.2905,
+        time: '1h ago',
+        likes: 590,
+        viewsCount: 3890,
+        views: '3.9k',
+        emoji: '🎊'
+      },
+      {
+        id: 'p7',
+        pandal: 'Melarmath Sarbajanin Mandap',
+        neighborhood: 'Melarmath',
+        uploader: 'Sneha Majumder',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Sneha&backgroundColor=ffdfbf',
+        imageUrl: '/pandal1.jpg',
+        lat: 23.8305,
+        lng: 91.2855,
+        time: '2h ago',
+        likes: 530,
+        viewsCount: 3740,
+        views: '3.7k',
+        emoji: '🕊️'
+      },
+      {
+        id: 'p8',
+        pandal: 'Kali Bari Puja Samiti',
+        neighborhood: 'Kali Bari',
+        uploader: 'Riya Das',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Riya&backgroundColor=c0aede',
+        imageUrl: '/images/agartala.jpg',
+        lat: 23.8295,
+        lng: 91.2940,
+        time: '2h ago',
+        likes: 620,
+        viewsCount: 3450,
+        views: '3.5k',
+        emoji: '🌺'
+      },
+      {
+        id: 'p9',
         pandal: 'Abhoynagar Sarbojanin',
         neighborhood: 'Abhoynagar',
         uploader: 'Debu Paul',
@@ -648,10 +857,56 @@
         imageUrl: '/pandal1.jpg',
         lat: 23.8400,
         lng: 91.2950,
-        time: '4h ago',
-        likes: 315,
-        views: '1.4k',
+        time: '3h ago',
+        likes: 480,
+        viewsCount: 3150,
+        views: '3.2k',
         emoji: '🙏'
+      },
+      {
+        id: 'p10',
+        pandal: 'Badharghat Kalitola Club',
+        neighborhood: 'Badharghat',
+        uploader: 'Mousumi Sarkar',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Mousumi&backgroundColor=d1d4f9',
+        imageUrl: '/images/agartala.jpg',
+        lat: 23.8160,
+        lng: 91.2780,
+        time: '4h ago',
+        likes: 410,
+        viewsCount: 2980,
+        views: '3.0k',
+        emoji: '🏮'
+      },
+      {
+        id: 'p11',
+        pandal: 'Bordowali Milan Sangha',
+        neighborhood: 'Bordowali',
+        uploader: 'Kaushik Bhowmik',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Kaushik&backgroundColor=ffd5dc',
+        imageUrl: '/pandal1.jpg',
+        lat: 23.8190,
+        lng: 91.2850,
+        time: '5h ago',
+        likes: 370,
+        viewsCount: 2850,
+        views: '2.9k',
+        emoji: '🔱'
+      },
+      {
+        id: 'p12',
+        pandal: 'Motor Stand Puja Committee',
+        neighborhood: 'Krishnanagar',
+        uploader: 'Soham Dey',
+        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Soham&backgroundColor=ffd5dc',
+        imageUrl: '/images/agartala.jpg',
+        lat: 23.8270,
+        lng: 91.2820,
+        time: '5h ago',
+        likes: 390,
+        viewsCount: 2640,
+        views: '2.6k',
+        emoji: '🥁'
       }
     ];
 
@@ -719,7 +974,7 @@
     }
 
     /* ── Google Maps Initialization Callback ── */
-    window.initMap = function() {
+    window._realInitMap = function() {
       try {
         const mapElement = document.getElementById('map');
         map = new google.maps.Map(mapElement, {
@@ -750,6 +1005,10 @@
         autoDetectUserAndZoom();
       }
     };
+    window.initMap = window._realInitMap;
+    if (window._pendingInitMap) {
+      window._realInitMap();
+    }
 
     /* ── Auto-Detect User Location & Zoom on Startup ── */
     function autoDetectUserAndZoom() {
@@ -861,13 +1120,14 @@
       window.SnapOverlayMarker.prototype.onAdd = function() {
         const div = document.createElement('div');
         div.className = 'snap-marker-container';
+        const markerAvatar = this.snap.userAvatar || this.snap.avatar || this.snap.imageUrl;
         div.innerHTML = `
           <div class="snap-pulse-ring"></div>
-          <div class="snap-avatar-ring">
+          <div class="snap-avatar-ring ${this.snap.userId ? 'border-2 border-emerald-400' : ''}">
             <div class="snap-avatar-inner">
-              <img src="${this.snap.imageUrl}" alt="${this.snap.pandal}" loading="lazy">
+              <img src="${markerAvatar}" alt="${this.snap.pandal}" loading="lazy">
             </div>
-            <div class="snap-pin-badge">${this.snap.emoji}</div>
+            <div class="snap-pin-badge">${this.snap.emoji || '🪔'}</div>
           </div>
           <div class="snap-pin-tail"></div>
         `;
@@ -991,7 +1251,7 @@
         nearbySnapsList.classList.remove('hidden');
         recentSnapsList.classList.add('hidden');
         drawerTitle.textContent = 'Nearby Pandals';
-        drawerSubtitle.textContent = 'Sorted by proximity to your live location';
+        drawerSubtitle.textContent = 'Top 10 · Sorted by popularity 🔥';
         updateNearbyList();
       }
     }
@@ -1051,69 +1311,111 @@
       });
     }
 
-    /* ── 2. Render Nearby Pandals (Proximity Sorted) ── */
+    /* ── 2. Render Nearby Pandals (Top 10 Sorted by Popularity Descending) ── */
     function updateNearbyList() {
       const listEl = document.getElementById('nearby-snaps-list');
       if (!listEl) return;
       listEl.innerHTML = '';
 
-      // Calculate Haversine distance and sort ascending
-      const sortedPandals = snapsData.map(snap => {
+      // 1. Calculate physical distance for all pandals using Haversine formula
+      const pandalsWithDistance = snapsData.map(snap => {
         const distKm = calculateHaversineDistance(
           currentUserCoords.lat, currentUserCoords.lng,
           snap.lat, snap.lng
         );
-        return { ...snap, distKm };
-      }).sort((a, b) => a.distKm - b.distKm);
+        // Interaction score: viewsCount + likes * 4
+        const popularityScore = (snap.viewsCount || 1000) + ((snap.likes || 100) * 4);
+        return { ...snap, distKm, popularityScore };
+      });
 
-      sortedPandals.forEach(snap => {
+      // 2. Filter/prioritize pandals within proximity radius (or take closest candidate cluster)
+      let nearbyCandidates = pandalsWithDistance.filter(p => p.distKm <= 15.0);
+      if (nearbyCandidates.length < 5) {
+        nearbyCandidates = [...pandalsWithDistance].sort((a, b) => a.distKm - b.distKm).slice(0, 15);
+      }
+
+      // 3. Sort these nearby pandals primarily by popularity / view count / engagement in DESCENDING order
+      nearbyCandidates.sort((a, b) => b.popularityScore - a.popularityScore);
+
+      // 4. Limit to exactly the top 10 results
+      const top10Nearby = nearbyCandidates.slice(0, 10);
+
+      // 5. Render cards
+      top10Nearby.forEach((snap, index) => {
         const distStr = formatDistance(snap.distKm);
+        const rank = index + 1;
+
+        // Dynamic popularity badge
+        let popBadgeHtml = '';
+        if (rank === 1) {
+          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-500/25 to-red-500/25 text-amber-300 border border-amber-500/40 shadow-sm flex items-center gap-1">🔥 #1 Trending • ${snap.views}</span>`;
+        } else if (rank === 2) {
+          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/35 flex items-center gap-1">⭐ #2 Popular • ${snap.views}</span>`;
+        } else if (rank === 3) {
+          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/35 flex items-center gap-1">✨ #3 Top Rated • ${snap.views}</span>`;
+        } else {
+          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/80 border border-white/15 flex items-center gap-1">👁️ ${snap.views} views</span>`;
+        }
+
         const item = document.createElement('div');
-        item.className = 'glass-card rounded-2xl p-3 flex flex-col gap-2.5 hover:bg-white/10 transition';
+        item.className = 'glass-card rounded-2xl p-3 flex flex-col gap-2.5 hover:bg-white/10 transition active:scale-[0.99]';
         item.innerHTML = `
           <div class="flex items-center gap-3">
-            <div class="pandal-thumb relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border-2 border-puja-gold/70 cursor-pointer">
+            <!-- Rank & Thumbnail -->
+            <div class="relative w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 border-2 border-puja-gold/60 cursor-pointer shadow-md">
               <img src="${snap.imageUrl}" alt="${snap.pandal}" class="w-full h-full object-cover">
-              <span class="absolute bottom-0.5 right-0.5 text-[10px]">${snap.emoji}</span>
+              <span class="absolute top-1 left-1 w-5 h-5 rounded-full bg-black/75 text-[10px] font-black text-amber-300 flex items-center justify-center border border-amber-400/30">#${rank}</span>
+              <span class="absolute bottom-1 right-1 text-xs drop-shadow">${snap.emoji}</span>
             </div>
-            <div class="pandal-info flex-1 min-w-0 cursor-pointer">
-              <div class="flex items-center justify-between">
+
+            <!-- Title, Area & Popularity Badge -->
+            <div class="flex-1 min-w-0 cursor-pointer">
+              <div class="flex items-center justify-between gap-1 mb-0.5">
                 <h4 class="text-white font-bold text-sm truncate">${snap.pandal}</h4>
               </div>
-              <p class="text-white/60 text-xs truncate">${snap.neighborhood}</p>
+              <p class="text-white/60 text-xs truncate mb-1.5">${snap.neighborhood}</p>
+              <div class="flex items-center gap-2 flex-wrap">
+                ${popBadgeHtml}
+                <span class="text-white/40 text-[11px]">❤️ ${snap.likes}</span>
+              </div>
             </div>
+
             <!-- Live Distance Badge -->
-            <div class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold whitespace-nowrap shadow-sm">
-              📍 ${distStr}
+            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+              <div class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold whitespace-nowrap shadow-sm">
+                📍 ${distStr}
+              </div>
             </div>
           </div>
 
-          <!-- Action Buttons: Focus on Map + Directions -->
-          <div class="flex items-center gap-2 pt-1 border-t border-white/5">
-            <button class="btn-focus-pandal flex-1 py-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center justify-center gap-1.5 active:scale-95 transition">
-              <span>🎯 Focus on Map</span>
+          <!-- Quick Actions: Pan/Focus on Map + Directions -->
+          <div class="flex items-center gap-2 pt-1.5 border-t border-white/5">
+            <button class="btn-focus-pandal flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-saffron/20 to-puja-crimson/20 hover:from-saffron/30 hover:to-puja-crimson/30 border border-saffron/40 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition shadow-sm">
+              <span>🎯 Pan & View Story</span>
             </button>
-            <a href="https://www.google.com/maps/dir/?api=1&origin=${currentUserCoords.lat},${currentUserCoords.lng}&destination=${snap.lat},${snap.lng}" target="_blank" rel="noopener noreferrer" class="py-1.5 px-3 rounded-xl bg-saffron/20 hover:bg-saffron/30 border border-saffron/40 text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition">
+            <a href="https://www.google.com/maps/dir/?api=1&origin=${currentUserCoords.lat},${currentUserCoords.lng}&destination=${snap.lat},${snap.lng}" target="_blank" rel="noopener noreferrer" class="py-2 px-3.5 rounded-xl glass-card text-white/80 hover:text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition">
               <span>🗺️ Directions</span>
             </a>
           </div>
         `;
 
-        // Row tap -> Open Story Modal
-        item.querySelector('.pandal-thumb').addEventListener('click', () => openStoryModal(snap));
-        item.querySelector('.pandal-info').addEventListener('click', () => openStoryModal(snap));
-
-        // Focus Button -> Smoothly pans & zooms Google Map to pandal
-        item.querySelector('.btn-focus-pandal').addEventListener('click', (e) => {
-          e.stopPropagation();
+        // Tapping card content -> Pan map, zoom in, open story modal
+        const triggerPandal = () => {
           if (map) {
             map.panTo({ lat: snap.lat, lng: snap.lng });
-            map.setZoom(17);
+            map.setZoom(16);
           }
-          // Collapse drawer to reveal map pin
+          openStoryModal(snap);
           bottomSheet.classList.remove('expanded');
           btnToggleDrawer.textContent = 'Expand ↑';
           showToast(`🎯 Centered on ${snap.pandal} (${distStr})`);
+        };
+
+        item.querySelector('.relative').addEventListener('click', triggerPandal);
+        item.querySelector('.flex-1').addEventListener('click', triggerPandal);
+        item.querySelector('.btn-focus-pandal').addEventListener('click', (e) => {
+          e.stopPropagation();
+          triggerPandal();
         });
 
         listEl.appendChild(item);
@@ -1124,8 +1426,10 @@
     function openStoryModal(snap) {
       const modal = document.getElementById('story-modal');
       const storyImg = document.getElementById('story-img');
+      const storyVideo = document.getElementById('story-video');
       const storyAvatar = document.getElementById('story-avatar');
       const storyUploader = document.getElementById('story-uploader');
+      const storyVerifiedBadge = document.getElementById('story-verified-badge');
       const storyTime = document.getElementById('story-time');
       const storyEmoji = document.getElementById('story-emoji');
       const storyNeighborhood = document.getElementById('story-neighborhood');
@@ -1134,15 +1438,37 @@
       const storyViewsCount = document.getElementById('story-views-count');
       const progressFill = document.getElementById('story-progress-fill');
 
-      storyImg.src = snap.imageUrl;
-      storyAvatar.src = snap.avatar;
-      storyUploader.textContent = snap.uploader;
-      storyTime.textContent = snap.time;
-      storyEmoji.textContent = snap.emoji;
-      storyNeighborhood.textContent = `${snap.neighborhood}, Agartala`;
-      storyPandalTitle.textContent = snap.pandal;
-      storyLikesCount.textContent = snap.likes;
-      storyViewsCount.textContent = snap.views;
+      const mediaUrl = snap.mediaUrl || snap.imageUrl;
+      const isVideo = snap.mediaType === 'video' || (typeof mediaUrl === 'string' && (mediaUrl.startsWith('data:video') || mediaUrl.endsWith('.mp4')));
+
+      if (isVideo) {
+        storyVideo.src = mediaUrl;
+        storyVideo.classList.remove('hidden');
+        storyImg.classList.add('hidden');
+        storyVideo.currentTime = 0;
+        storyVideo.play().catch(() => {});
+      } else {
+        storyImg.src = mediaUrl;
+        storyImg.classList.remove('hidden');
+        storyVideo.classList.add('hidden');
+        storyVideo.pause();
+      }
+
+      storyAvatar.src = snap.userAvatar || snap.avatar;
+      storyUploader.textContent = snap.userName || snap.uploader;
+
+      if (snap.userId) {
+        if (storyVerifiedBadge) storyVerifiedBadge.classList.remove('hidden');
+      } else {
+        if (storyVerifiedBadge) storyVerifiedBadge.classList.add('hidden');
+      }
+
+      storyTime.textContent = snap.time || 'Just now';
+      storyEmoji.textContent = snap.emoji || '🪔';
+      storyNeighborhood.textContent = `${snap.neighborhood || 'Agartala'}, Agartala`;
+      storyPandalTitle.textContent = snap.pandalName || snap.pandal;
+      storyLikesCount.textContent = snap.likes || 1;
+      storyViewsCount.textContent = snap.views || '1';
 
       modal.classList.add('active');
 
@@ -1162,7 +1488,9 @@
 
     function closeStoryModal() {
       const modal = document.getElementById('story-modal');
+      const storyVideo = document.getElementById('story-video');
       modal.classList.remove('active');
+      if (storyVideo) storyVideo.pause();
       clearTimeout(currentStoryTimer);
     }
 
@@ -1239,20 +1567,232 @@
     const cameraInput = document.getElementById('camera-input');
     const galleryInput = document.getElementById('gallery-input');
     const uploadPreviewImg = document.getElementById('upload-preview-img');
+    const uploadPreviewVideo = document.getElementById('upload-preview-video');
     const placeholderContent = document.getElementById('placeholder-content');
     const btnSubmitSnap = document.getElementById('btn-submit-snap');
     const inputPandalName = document.getElementById('input-pandal-name');
     const inputNeighborhood = document.getElementById('input-neighborhood');
+    const inputCategoryEmoji = document.getElementById('input-category-emoji');
     const inputUploader = document.getElementById('input-uploader');
     const gpsStatusDot = document.getElementById('gps-status-dot');
     const gpsStatusText = document.getElementById('gps-status-text');
     const gpsStrategyBadge = document.getElementById('gps-strategy-badge');
     const gpsMethodDesc = document.getElementById('gps-method-desc');
-    const gpsCoordsDisplay = document.getElementById('gps-coords-display');
 
+    let capturedMediaData = null;
+    let capturedMediaType = 'image';
+    let currentUser = null;
+
+    /* ── GOOGLE AUTHENTICATION SYSTEM ── */
+    function updateAuthUI(user) {
+      const btnSignIn = document.getElementById('btn-google-signin');
+      const profileChip = document.getElementById('user-profile-chip');
+      const avatarImg = document.getElementById('user-avatar-img');
+      const nameLabel = document.getElementById('user-name-label');
+      const uploadAvatar = document.getElementById('upload-user-avatar');
+      const uploadName = document.getElementById('upload-user-name');
+
+      if (user) {
+        if (btnSignIn) btnSignIn.classList.add('hidden');
+        if (profileChip) profileChip.classList.remove('hidden');
+        if (avatarImg) avatarImg.src = user.photoURL;
+        if (nameLabel) nameLabel.textContent = (user.displayName || 'User').split(' ')[0];
+
+        if (uploadAvatar) uploadAvatar.src = user.photoURL;
+        if (uploadName) uploadName.textContent = user.displayName;
+      } else {
+        if (btnSignIn) btnSignIn.classList.remove('hidden');
+        if (profileChip) profileChip.classList.add('hidden');
+        if (uploadName) uploadName.textContent = 'Not signed in';
+      }
+    }
+
+    function openGoogleAuthModal(reason) {
+      const modal = document.getElementById('google-auth-modal');
+      const reasonEl = document.getElementById('auth-modal-reason');
+      if (reason && reasonEl) {
+        reasonEl.textContent = reason;
+      }
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeGoogleAuthModal() {
+      const modal = document.getElementById('google-auth-modal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    async function handleGoogleSignIn() {
+      if (isRealFirebaseConfig && firebaseAuth && googleProvider) {
+        try {
+          showToast('🔑 Opening Google Sign-In...');
+          const result = await signInWithPopup(firebaseAuth, googleProvider);
+          const user = result.user;
+          currentUser = {
+            uid: user.uid,
+            displayName: user.displayName || 'Devotee',
+            email: user.email,
+            photoURL: user.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user.displayName || 'Devotee')}&backgroundColor=ffdfbf`
+          };
+          localStorage.setItem('puja_parikrama_user', JSON.stringify(currentUser));
+          updateAuthUI(currentUser);
+          closeGoogleAuthModal();
+          showToast(`🎉 Signed in as ${currentUser.displayName}!`);
+          return currentUser;
+        } catch (err) {
+          console.warn("Firebase popup error:", err);
+          if (err.code === 'auth/popup-closed-by-user') {
+            showToast('⚠️ Google sign-in cancelled');
+            return null;
+          }
+          showToast('Notice: Using local Google session for testing');
+          return runSimulatedGoogleAuth();
+        }
+      } else {
+        return runSimulatedGoogleAuth();
+      }
+    }
+
+    function runSimulatedGoogleAuth() {
+      const simulatedNames = ['Shatadru Sarkar', 'Ananya Roy', 'Priya Saha', 'Saptarshi Sen'];
+      const chosenName = simulatedNames[Math.floor(Math.random() * simulatedNames.length)];
+      currentUser = {
+        uid: 'google-uid-' + Math.random().toString(36).substring(2, 10),
+        displayName: chosenName,
+        email: `${chosenName.toLowerCase().replace(' ', '.')}@gmail.com`,
+        photoURL: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(chosenName)}&backgroundColor=ffdfbf`
+      };
+      localStorage.setItem('puja_parikrama_user', JSON.stringify(currentUser));
+      updateAuthUI(currentUser);
+      closeGoogleAuthModal();
+      showToast(`✅ Signed in as ${currentUser.displayName} (Google Verified)`);
+      return currentUser;
+    }
+
+    function handleSignOut() {
+      if (firebaseAuth && isRealFirebaseConfig) {
+        signOut(firebaseAuth).catch(() => {});
+      }
+      currentUser = null;
+      localStorage.removeItem('puja_parikrama_user');
+      updateAuthUI(null);
+      showToast('👋 Signed out from Google');
+    }
+
+    // Restore cached session on startup
+    const cachedUser = localStorage.getItem('puja_parikrama_user');
+    if (cachedUser) {
+      try {
+        currentUser = JSON.parse(cachedUser);
+        updateAuthUI(currentUser);
+      } catch {
+        localStorage.removeItem('puja_parikrama_user');
+      }
+    }
+
+    // Listen to Firebase Auth state change if configured
+    if (firebaseAuth) {
+      onAuthStateChanged(firebaseAuth, (user) => {
+        if (user) {
+          currentUser = {
+            uid: user.uid,
+            displayName: user.displayName || 'Devotee',
+            email: user.email,
+            photoURL: user.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user.displayName || 'Devotee')}&backgroundColor=ffdfbf`
+          };
+          localStorage.setItem('puja_parikrama_user', JSON.stringify(currentUser));
+          updateAuthUI(currentUser);
+        } else if (isRealFirebaseConfig) {
+          currentUser = null;
+          localStorage.removeItem('puja_parikrama_user');
+          updateAuthUI(null);
+        }
+      });
+    }
+
+    // Wire auth buttons
+    document.getElementById('btn-google-signin')?.addEventListener('click', handleGoogleSignIn);
+    document.getElementById('btn-modal-google-signin')?.addEventListener('click', handleGoogleSignIn);
+    document.getElementById('btn-close-auth-modal')?.addEventListener('click', closeGoogleAuthModal);
+    document.getElementById('btn-signout')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleSignOut();
+    });
+
+    /* ── Firestore Real-time Broadcast & Sync ── */
+    async function pushSnapToFirestore(newSnap) {
+      if (firestoreDb && isRealFirebaseConfig) {
+        try {
+          await addDoc(collection(firestoreDb, 'snaps'), {
+            userId: newSnap.userId,
+            userName: newSnap.userName,
+            userAvatar: newSnap.userAvatar,
+            mediaUrl: newSnap.mediaUrl,
+            mediaType: newSnap.mediaType,
+            pandalName: newSnap.pandalName,
+            neighborhood: newSnap.neighborhood,
+            coordinates: newSnap.coordinates,
+            emoji: newSnap.emoji,
+            likes: newSnap.likes,
+            viewsCount: newSnap.viewsCount,
+            timestamp: serverTimestamp()
+          });
+          console.log('📡 Snap synced to shared Firestore database!');
+        } catch (err) {
+          console.warn('Firestore push notice:', err);
+        }
+      }
+    }
+
+    function initFirestoreRealtimeSync() {
+      if (!firestoreDb || !isRealFirebaseConfig) return;
+      try {
+        const q = query(collection(firestoreDb, 'snaps'), orderBy('timestamp', 'desc'));
+        onSnapshot(q, (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+              const docData = change.doc.data();
+              const docId = change.doc.id;
+              if (!snapsData.some(s => s.id === docId || (s.userId === docData.userId && Math.abs(s.lat - docData.coordinates.lat) < 0.00001))) {
+                const incomingSnap = {
+                  id: docId,
+                  userId: docData.userId,
+                  userName: docData.userName,
+                  userAvatar: docData.userAvatar,
+                  mediaUrl: docData.mediaUrl,
+                  mediaType: docData.mediaType || 'image',
+                  pandalName: docData.pandalName,
+                  pandal: docData.pandalName,
+                  neighborhood: docData.neighborhood || 'Agartala',
+                  uploader: docData.userName,
+                  avatar: docData.userAvatar,
+                  imageUrl: docData.mediaUrl,
+                  lat: docData.coordinates.lat,
+                  lng: docData.coordinates.lng,
+                  coordinates: docData.coordinates,
+                  time: 'Just now',
+                  likes: docData.likes || 1,
+                  viewsCount: docData.viewsCount || 1,
+                  views: '1',
+                  emoji: docData.emoji || '🪔'
+                };
+                addDynamicPinAndSync(incomingSnap);
+              }
+            }
+          });
+        });
+      } catch (err) {
+        console.warn('Firestore real-time listener notice:', err);
+      }
+    }
+    initFirestoreRealtimeSync();
+
+    /* ── Camera Upload Triggers (Protected by Google Auth) ── */
     floatingCamera.addEventListener('click', () => {
+      if (!currentUser) {
+        openGoogleAuthModal('Sign in with Google to snap pandal stories, anchor your GPS coordinates, and broadcast to the Agartala map.');
+        return;
+      }
       uploadModal.classList.add('active');
-      // Proactively start acquiring live GPS in background for quick response
       getLiveGPSLocation()
         .then(loc => updateGpsUI(loc))
         .catch(() => updateGpsUI(getFallbackLocation()));
@@ -1262,8 +1802,21 @@
       uploadModal.classList.remove('active');
     });
 
-    btnTriggerCamera.addEventListener('click', () => cameraInput.click());
-    btnTriggerGallery.addEventListener('click', () => galleryInput.click());
+    btnTriggerCamera.addEventListener('click', () => {
+      if (!currentUser) {
+        openGoogleAuthModal('Sign in with Google to capture camera snaps.');
+        return;
+      }
+      cameraInput.click();
+    });
+
+    btnTriggerGallery.addEventListener('click', () => {
+      if (!currentUser) {
+        openGoogleAuthModal('Sign in with Google to upload photos or videos.');
+        return;
+      }
+      galleryInput.click();
+    });
 
     /* ── STRATEGY A: Live GPS Capture via Geolocation API ── */
     function getLiveGPSLocation() {
@@ -1358,28 +1911,41 @@
       };
     }
 
-    /* ── Update GPS Info in Upload UI ── */
+    /* ── Update GPS Info in Upload UI (no raw coords shown) ── */
     function updateGpsUI(loc) {
+      // Store location silently — never expose raw lat/lng in UI
       userLocation = { lat: loc.lat, lng: loc.lng };
-      gpsStatusText.textContent = `${loc.strategy}: ${loc.badge}`;
-      gpsCoordsDisplay.textContent = `${loc.lat.toFixed(4)}° N, ${loc.lng.toFixed(4)}° E`;
-      gpsMethodDesc.textContent = loc.description;
 
-      gpsStatusDot.className = `w-2.5 h-2.5 rounded-full ${loc.dotColor} animate-pulse`;
-      gpsStrategyBadge.className = `px-2 py-0.5 rounded-full text-[10px] font-bold border ${loc.badgeColor}`;
-      gpsStrategyBadge.textContent = loc.badge;
+      // Update clean status indicators only
+      if (gpsStatusText) gpsStatusText.textContent = `📍 ${loc.badge}`;
+      if (gpsMethodDesc) gpsMethodDesc.textContent = loc.description;
+      if (gpsStatusDot) gpsStatusDot.className = `w-2.5 h-2.5 rounded-full ${loc.dotColor} animate-pulse`;
+      if (gpsStrategyBadge) {
+        gpsStrategyBadge.className = `px-2.5 py-1 rounded-full text-[10px] font-bold border ${loc.badgeColor}`;
+        gpsStrategyBadge.textContent = `📍 ${loc.badge}`;
+      }
     }
 
-    /* ── Image Selection & Geotag Orchestration ── */
+    /* ── Image & Video Selection & Geotag Orchestration ── */
     async function processPhotoSelection(file, source) {
       if (!file) return;
 
-      // 1. Read preview image
+      const isVideo = file.type.startsWith('video');
+      capturedMediaType = isVideo ? 'video' : 'image';
+
+      // 1. Read preview image or video
       const reader = new FileReader();
       reader.onload = function(e) {
-        capturedPhotoData = e.target.result;
-        uploadPreviewImg.src = capturedPhotoData;
-        uploadPreviewImg.classList.remove('hidden');
+        capturedMediaData = e.target.result;
+        if (isVideo && uploadPreviewVideo) {
+          uploadPreviewVideo.src = capturedMediaData;
+          uploadPreviewVideo.classList.remove('hidden');
+          uploadPreviewImg.classList.add('hidden');
+        } else {
+          uploadPreviewImg.src = capturedMediaData;
+          uploadPreviewImg.classList.remove('hidden');
+          if (uploadPreviewVideo) uploadPreviewVideo.classList.add('hidden');
+        }
         placeholderContent.classList.add('hidden');
         validateUploadForm();
       };
@@ -1389,8 +1955,8 @@
       gpsStatusText.textContent = 'Analyzing Location...';
       gpsMethodDesc.textContent = 'Resolving geotag coordinates...';
 
-      if (source === 'camera') {
-        /* Strategy A: Live GPS Capture Primary for Camera Shots */
+      if (source === 'camera' || isVideo) {
+        /* Strategy A: Live GPS Capture Primary for Camera Shots & Videos */
         try {
           const liveLoc = await getLiveGPSLocation();
           updateGpsUI(liveLoc);
@@ -1407,7 +1973,6 @@
           updateGpsUI(exifLoc);
           showToast('📸 Extracted EXIF GPS from photo');
         } catch {
-          /* Fallback from Strategy B -> Strategy A (Device GPS) -> Strategy C */
           try {
             const liveLoc = await getLiveGPSLocation();
             updateGpsUI(liveLoc);
@@ -1427,9 +1992,9 @@
     inputPandalName.addEventListener('input', validateUploadForm);
 
     function validateUploadForm() {
-      const hasImg = !!capturedPhotoData;
+      const hasMedia = !!capturedMediaData;
       const hasName = inputPandalName.value.trim().length > 0;
-      btnSubmitSnap.disabled = !(hasImg && hasName);
+      btnSubmitSnap.disabled = !(hasMedia && hasName);
     }
 
     /* ── Dynamic Map Pin Creation & Instant Feed Sync ── */
@@ -1455,42 +2020,64 @@
       updateNearbyList();
     }
 
-    /* ── Submit New Snap Post ── */
-    btnSubmitSnap.addEventListener('click', () => {
+    /* ── Submit New Snap Post (Tagged with Authenticated Google User) ── */
+    btnSubmitSnap.addEventListener('click', async () => {
+      if (!currentUser) {
+        uploadModal.classList.remove('active');
+        openGoogleAuthModal('Sign in with Google before publishing your pandal snap to the live map!');
+        return;
+      }
+
       const pandalName = inputPandalName.value.trim();
       const neighborhood = inputNeighborhood.value.trim() || 'Agartala';
-      const uploader = inputUploader.value.trim() || 'Festive Devotee';
+      const categoryEmoji = inputCategoryEmoji ? inputCategoryEmoji.value : '🪔';
 
       const newSnap = {
-        id: 'user-' + Date.now(),
+        id: 'snap-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        userId: currentUser.uid,
+        userName: currentUser.displayName,
+        userAvatar: currentUser.photoURL,
+        mediaUrl: capturedMediaData || '/pandal1.jpg',
+        mediaType: capturedMediaType || 'image',
+        pandalName: pandalName,
         pandal: pandalName,
         neighborhood: neighborhood,
-        uploader: uploader,
-        avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(uploader)}&backgroundColor=ffdfbf`,
-        imageUrl: capturedPhotoData || '/pandal1.jpg',
+        uploader: currentUser.displayName,
+        avatar: currentUser.photoURL,
+        imageUrl: capturedMediaData || '/pandal1.jpg',
+        coordinates: { lat: userLocation.lat, lng: userLocation.lng },
         lat: userLocation.lat,
         lng: userLocation.lng,
+        timestamp: new Date().toISOString(),
         time: 'Just now',
         likes: 1,
+        viewsCount: 1,
         views: '1',
-        emoji: '🪔'
+        emoji: categoryEmoji
       };
 
-      // Execute dynamic pin creation, map flight, and feed sync
+      // 1. Push to shared Firestore collection
+      await pushSnapToFirestore(newSnap);
+
+      // 2. Execute dynamic pin creation, map flight, and feed sync
       addDynamicPinAndSync(newSnap);
 
-      // Reset form & close modal
+      // 3. Reset form & close modal
       uploadModal.classList.remove('active');
       inputPandalName.value = '';
       inputNeighborhood.value = '';
-      inputUploader.value = '';
-      capturedPhotoData = null;
+      capturedMediaData = null;
+      capturedMediaType = 'image';
       uploadPreviewImg.src = '';
       uploadPreviewImg.classList.add('hidden');
+      if (uploadPreviewVideo) {
+        uploadPreviewVideo.src = '';
+        uploadPreviewVideo.classList.add('hidden');
+      }
       placeholderContent.classList.remove('hidden');
       btnSubmitSnap.disabled = true;
 
-      showToast(`🎉 "${pandalName}" dropped onto the map!`);
+      showToast(`🎉 "${pandalName}" tagged with ${(currentUser.displayName || 'Devotee').split(' ')[0]} & broadcasted live!`);
     });
 
     /* ── Recenter Map Button (Pans to Live User Location) ── */

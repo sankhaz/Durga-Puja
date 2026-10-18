@@ -3,8 +3,20 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 /* ─────────────────────────────────────────────────────────────────────────
    Types
    ───────────────────────────────────────────────────────────────────────── */
-interface SnapPost {
+export interface AuthUser {
+  uid: string
+  displayName: string
+  email?: string
+  photoURL: string
+}
+
+export interface SnapPost {
   id: string
+  userId?: string
+  userName?: string
+  userAvatar?: string
+  mediaUrl?: string
+  mediaType?: 'image' | 'video'
   pandal: string
   neighborhood: string
   uploader: string
@@ -12,6 +24,7 @@ interface SnapPost {
   imageUrl: string
   lat: number
   lng: number
+  coordinates?: { lat: number; lng: number }
   timestamp: Date
   likes: number
   views: number
@@ -41,34 +54,76 @@ const AVATARS = [
 
 const SEED_POSTS: SnapPost[] = [
   {
-    id: 'post-1', pandal: 'Battala Durga Puja', neighborhood: 'Battala', uploader: 'Priya Saha',
-    avatar: AVATARS[0], imageUrl: '/pandal1.jpg',
-    lat: 23.8361, lng: 91.2812, timestamp: new Date(Date.now() - 18 * 60000),
-    likes: 247, views: 1823, emoji: '🪔',
-  },
-  {
-    id: 'post-2', pandal: 'Kali Bari Puja Committee', neighborhood: 'Kali Bari', uploader: 'Riya Das',
-    avatar: AVATARS[1], imageUrl: '/pandal1.jpg',
-    lat: 23.8295, lng: 91.2940, timestamp: new Date(Date.now() - 45 * 60000),
-    likes: 183, views: 942, emoji: '🌺',
-  },
-  {
-    id: 'post-3', pandal: 'Ujjayanta Puja Mandap', neighborhood: 'Palace Compound', uploader: 'Ananya Roy',
+    id: 'post-1', pandal: 'Ujjayanta Palace Mandap', neighborhood: 'Palace Compound', uploader: 'Ananya Roy',
     avatar: AVATARS[2], imageUrl: '/pandal1.jpg',
-    lat: 23.8350, lng: 91.2880, timestamp: new Date(Date.now() - 2 * 3600000),
-    likes: 521, views: 3104, emoji: '✨',
+    lat: 23.8350, lng: 91.2880, timestamp: new Date(Date.now() - 18 * 60000),
+    likes: 940, views: 5910, emoji: '👑',
   },
   {
-    id: 'post-4', pandal: 'Motor Stand Puja Committee', neighborhood: 'Krishnanagar', uploader: 'Soham Dey',
-    avatar: AVATARS[3], imageUrl: '/pandal1.jpg',
-    lat: 23.8270, lng: 91.2820, timestamp: new Date(Date.now() - 3 * 3600000),
-    likes: 98, views: 561, emoji: '🎊',
+    id: 'post-2', pandal: 'Banamalipur Club & Youth Union', neighborhood: 'Banamalipur', uploader: 'Saptarshi Sen',
+    avatar: AVATARS[1], imageUrl: '/images/agartala.jpg',
+    lat: 23.8335, lng: 91.2915, timestamp: new Date(Date.now() - 24 * 60000),
+    likes: 860, views: 5200, emoji: '🎆',
   },
   {
-    id: 'post-5', pandal: 'Abhoynagar Sarbojanin', neighborhood: 'Abhoynagar', uploader: 'Debu Paul',
+    id: 'post-3', pandal: 'Battala Durga Puja', neighborhood: 'Battala', uploader: 'Priya Saha',
+    avatar: AVATARS[0], imageUrl: '/pandal1.jpg',
+    lat: 23.8361, lng: 91.2812, timestamp: new Date(Date.now() - 35 * 60000),
+    likes: 780, views: 4820, emoji: '🪔',
+  },
+  {
+    id: 'post-4', pandal: 'Dhaleswar Netaji Play Center', neighborhood: 'Dhaleswar', uploader: 'Subhamita Das',
+    avatar: AVATARS[3], imageUrl: '/images/agartala.jpg',
+    lat: 23.8310, lng: 91.2965, timestamp: new Date(Date.now() - 42 * 60000),
+    likes: 670, views: 4300, emoji: '🌟',
+  },
+  {
+    id: 'post-5', pandal: 'Ramnagar Road No. 2', neighborhood: 'Ramnagar', uploader: 'Arindam Ghosh',
     avatar: AVATARS[4], imageUrl: '/pandal1.jpg',
-    lat: 23.8400, lng: 91.2950, timestamp: new Date(Date.now() - 5 * 3600000),
-    likes: 312, views: 1440, emoji: '🙏',
+    lat: 23.8430, lng: 91.2840, timestamp: new Date(Date.now() - 60 * 60000),
+    likes: 710, views: 4120, emoji: '✨',
+  },
+  {
+    id: 'post-6', pandal: 'Shanti Para Youth Club', neighborhood: 'Shantipara', uploader: 'Tanmoy Banik',
+    avatar: AVATARS[3], imageUrl: '/images/agartala.jpg',
+    lat: 23.8375, lng: 91.2905, timestamp: new Date(Date.now() - 75 * 60000),
+    likes: 590, views: 3890, emoji: '🎊',
+  },
+  {
+    id: 'post-7', pandal: 'Melarmath Sarbajanin Mandap', neighborhood: 'Melarmath', uploader: 'Sneha Majumder',
+    avatar: AVATARS[0], imageUrl: '/pandal1.jpg',
+    lat: 23.8305, lng: 91.2855, timestamp: new Date(Date.now() - 2 * 3600000),
+    likes: 530, views: 3740, emoji: '🕊️',
+  },
+  {
+    id: 'post-8', pandal: 'Kali Bari Puja Samiti', neighborhood: 'Kali Bari', uploader: 'Riya Das',
+    avatar: AVATARS[1], imageUrl: '/images/agartala.jpg',
+    lat: 23.8295, lng: 91.2940, timestamp: new Date(Date.now() - 2.5 * 3600000),
+    likes: 620, views: 3450, emoji: '🌺',
+  },
+  {
+    id: 'post-9', pandal: 'Abhoynagar Sarbojanin', neighborhood: 'Abhoynagar', uploader: 'Debu Paul',
+    avatar: AVATARS[4], imageUrl: '/pandal1.jpg',
+    lat: 23.8400, lng: 91.2950, timestamp: new Date(Date.now() - 3 * 3600000),
+    likes: 480, views: 3150, emoji: '🙏',
+  },
+  {
+    id: 'post-10', pandal: 'Badharghat Kalitola Club', neighborhood: 'Badharghat', uploader: 'Mousumi Sarkar',
+    avatar: AVATARS[2], imageUrl: '/images/agartala.jpg',
+    lat: 23.8160, lng: 91.2780, timestamp: new Date(Date.now() - 4 * 3600000),
+    likes: 410, views: 2980, emoji: '🏮',
+  },
+  {
+    id: 'post-11', pandal: 'Bordowali Milan Sangha', neighborhood: 'Bordowali', uploader: 'Kaushik Bhowmik',
+    avatar: AVATARS[3], imageUrl: '/pandal1.jpg',
+    lat: 23.8190, lng: 91.2850, timestamp: new Date(Date.now() - 5 * 3600000),
+    likes: 370, views: 2850, emoji: '🔱',
+  },
+  {
+    id: 'post-12', pandal: 'Motor Stand Puja Committee', neighborhood: 'Krishnanagar', uploader: 'Soham Dey',
+    avatar: AVATARS[3], imageUrl: '/images/agartala.jpg',
+    lat: 23.8270, lng: 91.2820, timestamp: new Date(Date.now() - 6 * 3600000),
+    likes: 390, views: 2640, emoji: '🥁',
   },
 ]
 
@@ -422,7 +477,7 @@ function UploadModal({ visible, onClose, onSubmit }: UploadModalProps) {
                   <div className="w-2 h-2 rounded-full" style={{ background: '#4ade80' }} />
                 )}
                 <span className="text-white text-xs font-medium">
-                  {locating ? 'Locating…' : coords ? `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` : 'No GPS'}
+                  {locating ? 'Acquiring GPS…' : coords ? 'Location Tagged • Agartala' : 'Agartala Center'}
                 </span>
               </div>
             </div>
@@ -899,28 +954,43 @@ export default function App() {
               </div>
             ) : (
               <div className="flex flex-col gap-2">
-                {[...posts]
-                  .map(p => ({
-                    ...p,
-                    distanceKm: calculateHaversineDistance(
+                {(() => {
+                  const withDistance = posts.map(p => {
+                    const distKm = calculateHaversineDistance(
                       currentUserCoords.lat,
                       currentUserCoords.lng,
                       p.lat,
                       p.lng
-                    ),
-                  }))
-                  .sort((a, b) => a.distanceKm - b.distanceKm)
-                  .map(p => {
-                    const distStr = formatDistance(p.distanceKm)
+                    )
+                    const popularityScore = (p.views || 1000) + ((p.likes || 100) * 4)
+                    return { ...p, distKm, popularityScore }
+                  })
+
+                  // Filter/prioritize nearby candidates
+                  let candidates = withDistance.filter(p => p.distKm <= 15.0)
+                  if (candidates.length < 5) {
+                    candidates = [...withDistance].sort((a, b) => a.distKm - b.distKm).slice(0, 15)
+                  }
+
+                  // Sort by popularity score descending
+                  candidates.sort((a, b) => b.popularityScore - a.popularityScore)
+
+                  // Limit to top 10
+                  const top10 = candidates.slice(0, 10)
+
+                  return top10.map((p, index) => {
+                    const distStr = formatDistance(p.distKm)
+                    const rank = index + 1
+
                     return (
                       <div
                         key={p.id}
-                        className="glass-card rounded-2xl p-3 flex flex-col gap-2.5 text-left"
+                        className="glass-card rounded-2xl p-3 flex flex-col gap-2 text-left"
                         style={{ background: 'rgba(255,255,255,0.05)' }}
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer"
+                            className="relative w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 cursor-pointer"
                             style={{ border: '2px solid rgba(240,180,41,0.6)' }}
                             onClick={() => {
                               setSelectedPost(p)
@@ -930,7 +1000,10 @@ export default function App() {
                             }}
                           >
                             <img src={p.imageUrl} alt={p.pandal} className="w-full h-full object-cover" />
-                            <span className="absolute bottom-0.5 right-0.5 text-[10px]">{p.emoji}</span>
+                            <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-black/75 text-[10px] font-black text-amber-300 flex items-center justify-center border border-amber-400/30">
+                              #{rank}
+                            </span>
+                            <span className="absolute bottom-1 right-1 text-xs drop-shadow">{p.emoji}</span>
                           </div>
                           <div
                             className="flex-1 min-w-0 cursor-pointer"
@@ -942,18 +1015,26 @@ export default function App() {
                             }}
                           >
                             <h4 className="text-white font-bold text-sm truncate">{p.pandal}</h4>
-                            <p className="text-white/60 text-xs truncate">{p.neighborhood}</p>
+                            <p className="text-white/60 text-xs truncate mb-1">{p.neighborhood}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                {rank === 1 ? '🔥 #1 Trending' : rank === 2 ? '⭐ #2 Popular' : rank === 3 ? '✨ #3 Top Rated' : `👁️ ${p.views.toLocaleString()} views`}
+                              </span>
+                              <span className="text-white/40 text-[11px]">❤️ {p.likes}</span>
+                            </div>
                           </div>
-                          <span
-                            className="px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap"
-                            style={{
-                              background: 'rgba(16,185,129,0.18)',
-                              color: '#6ee7b7',
-                              border: '1px solid rgba(16,185,129,0.35)',
-                            }}
-                          >
-                            📍 {distStr}
-                          </span>
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <span
+                              className="px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap"
+                              style={{
+                                background: 'rgba(16,185,129,0.18)',
+                                color: '#6ee7b7',
+                                border: '1px solid rgba(16,185,129,0.35)',
+                              }}
+                            >
+                              📍 {distStr}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-2 pt-1 border-t border-white/5">
@@ -961,27 +1042,29 @@ export default function App() {
                             onClick={() => {
                               googleMapRef.current?.panTo({ lat: p.lat, lng: p.lng })
                               googleMapRef.current?.setZoom(17)
+                              setSelectedPost(p)
                               setSheetExpanded(false)
                               showToast(`🎯 Centered on ${p.pandal} (${distStr})`)
                             }}
-                            className="flex-1 py-1.5 px-3 rounded-xl text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition"
-                            style={{ background: 'rgba(255,255,255,0.08)' }}
+                            className="flex-1 py-1.5 px-3 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition"
+                            style={{ background: 'linear-gradient(135deg, rgba(255,107,0,0.25), rgba(192,57,43,0.25))', border: '1px solid rgba(255,107,0,0.4)' }}
                           >
-                            🎯 Focus on Map
+                            🎯 Pan & View Story
                           </button>
                           <a
                             href={`https://www.google.com/maps/dir/?api=1&origin=${currentUserCoords.lat},${currentUserCoords.lng}&destination=${p.lat},${p.lng}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="py-1.5 px-3 rounded-xl text-white text-xs font-semibold flex items-center justify-center gap-1 active:scale-95 transition"
-                            style={{ background: 'rgba(255,107,0,0.25)', border: '1px solid rgba(255,107,0,0.4)' }}
+                            style={{ background: 'rgba(255,255,255,0.08)' }}
                           >
                             🗺️ Directions
                           </a>
                         </div>
                       </div>
                     )
-                  })}
+                  })
+                })()}
               </div>
             )}
           </div>
