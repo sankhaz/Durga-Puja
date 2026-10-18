@@ -746,75 +746,41 @@
           </div>
         </div>
 
-        <!-- 3. Pandal Auto-Matching Card & Searchable Dropdown -->
-        <div class="space-y-2">
-          <!-- Auto-Match Banner -->
-          <div id="pandal-match-banner" class="hidden rounded-xl p-2.5 border transition-all duration-200 flex items-center justify-between bg-emerald-500/10 border-emerald-500/30">
-            <div class="flex items-center gap-2 min-w-0">
-              <span id="pandal-match-icon" class="text-base flex-shrink-0">🎉</span>
-              <div class="min-w-0">
-                <span id="pandal-match-label" class="text-white text-xs font-bold block truncate">Matched with: Bharat Ratna Sangha</span>
-                <span id="pandal-match-sub" class="text-[10px] text-emerald-300 block">50m away from coordinates</span>
-              </div>
-            </div>
-            <span id="pandal-match-tag" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
-              Auto-Matched
-            </span>
-          </div>
-
-          <!-- Pandal Search & Dropdown Input -->
+        <!-- 3. Pandal Name & Dropdown -->
+        <div class="relative">
+          <label class="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+            <span>Pandal Name *</span>
+            <span class="text-[10px] text-amber-300/80 font-normal">Select known club or type custom</span>
+          </label>
           <div class="relative">
-            <label class="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-1 flex items-center justify-between">
-              <span>Pandal Name *</span>
-              <span class="text-[10px] text-amber-300/80 font-normal">Auto-selected or choose nearest</span>
-            </label>
-            <div class="relative">
-              <input 
-                id="input-pandal-name" 
-                type="text" 
-                placeholder="Type or select pandal..." 
-                autocomplete="off"
-                class="w-full bg-white/5 border border-white/15 rounded-xl pl-3.5 pr-10 py-2.5 text-white text-xs sm:text-sm focus:outline-none focus:border-amber-400 transition"
-              >
-              <button 
-                type="button" 
-                id="btn-toggle-pandal-dropdown" 
-                class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition"
-              >
-                ▼
-              </button>
-            </div>
-
-            <!-- Proximity-Sorted Dropdown Menu -->
-            <div 
-              id="pandal-dropdown-menu" 
-              class="hidden absolute left-0 right-0 top-full mt-1.5 z-30 bg-[#16162a] border border-white/15 rounded-xl shadow-2xl max-h-48 overflow-y-auto hide-scrollbar p-1.5 backdrop-blur-xl"
+            <input 
+              id="input-pandal-name" 
+              type="text" 
+              placeholder="e.g. Bharat Ratna Sangha or enter pandal name..." 
+              autocomplete="off"
+              class="w-full bg-white/5 border border-white/15 rounded-xl pl-3.5 pr-10 py-3 text-white text-xs sm:text-sm focus:outline-none focus:border-amber-400 transition"
             >
-              <div class="px-2 py-1 text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center justify-between border-b border-white/10 mb-1">
-                <span>Nearest Pandals (Proximity Sorted)</span>
-                <span>Distance</span>
-              </div>
-              <div id="pandal-dropdown-list" class="space-y-1">
-                <!-- Dynamically populated pandals with live calculated distance -->
-              </div>
-            </div>
+            <button 
+              type="button" 
+              id="btn-toggle-pandal-dropdown" 
+              class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white transition"
+              title="Show suggestions"
+            >
+              ▼
+            </button>
           </div>
 
-          <!-- Neighborhood & Category Row -->
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
-              <label class="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-1">Neighborhood</label>
-              <input id="input-neighborhood" type="text" placeholder="e.g. Usha Bazar" class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white text-xs sm:text-sm focus:outline-none focus:border-amber-400">
+          <!-- Proximity-Sorted Dropdown Menu -->
+          <div 
+            id="pandal-dropdown-menu" 
+            class="hidden absolute left-0 right-0 top-full mt-1.5 z-30 bg-[#16162a] border border-white/15 rounded-xl shadow-2xl max-h-48 overflow-y-auto hide-scrollbar p-1.5 backdrop-blur-xl"
+          >
+            <div class="px-2 py-1 text-[10px] font-semibold text-white/40 uppercase tracking-wider flex items-center justify-between border-b border-white/10 mb-1">
+              <span>Known Agartala Pandals</span>
+              <span>Distance</span>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-white/60 uppercase tracking-wider mb-1">Category Emoji</label>
-              <select id="input-category-emoji" class="w-full bg-[#16162a] border border-white/15 rounded-xl px-2.5 py-2 text-white text-xs sm:text-sm focus:outline-none focus:border-amber-400">
-                <option value="🪔">🪔 Traditional Pandal</option>
-                <option value="👑">👑 Royal Palace Mandap</option>
-                <option value="🎆">🎆 Theme & Lighting</option>
-                <option value="🥁">🥁 Dhak & Cultural</option>
-                <option value="🌟">🌟 Idol Art & Pratima</option>
-              </select>
+            <div id="pandal-dropdown-list" class="space-y-1">
+              <!-- Dynamically populated pandals with live calculated distance -->
             </div>
           </div>
         </div>
@@ -907,11 +873,20 @@
       getFirestore, 
       collection, 
       addDoc, 
+      doc, 
+      updateDoc, 
+      increment, 
       onSnapshot, 
       serverTimestamp, 
       query, 
       orderBy 
     } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+    import { 
+      getStorage, 
+      ref as storageRef, 
+      uploadBytes, 
+      getDownloadURL 
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
 
     /* ── 1. FIREBASE CONFIGURATION ──
        Replace with your real Firebase web configuration keys:
@@ -934,6 +909,7 @@
     let firebaseAuth = null;
     let googleProvider = null;
     let firestoreDb = null;
+    let firebaseStorage = null;
 
     if (isRealFirebaseConfig) {
       try {
@@ -942,196 +918,16 @@
         googleProvider = new GoogleAuthProvider();
         googleProvider.setCustomParameters({ prompt: 'select_account' });
         firestoreDb = getFirestore(firebaseApp);
-        console.log("🔥 Firebase initialized with live Auth & Firestore!");
+        firebaseStorage = getStorage(firebaseApp);
+        console.log("🔥 Firebase initialized with live Auth, Firestore & Storage!");
       } catch (err) {
         console.warn("Firebase initialization notice:", err);
       }
     }
-    /* ── Initial Seed Data for Agartala Pandals ── */
-    const AGARTALA_CENTER = { lat: 23.8315, lng: 91.2868 };
 
-    let snapsData = [
-      {
-        id: 'p1',
-        pandal: 'Ujjayanta Palace Mandap',
-        neighborhood: 'Palace Compound',
-        uploader: 'Ananya Roy',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Ananya&backgroundColor=d1d4f9',
-        imageUrl: '/pandal1.jpg',
-        lat: 23.8350,
-        lng: 91.2880,
-        time: '18m ago',
-        likes: 940,
-        viewsCount: 5910,
-        views: '5.9k',
-        emoji: '👑'
-      },
-      {
-        id: 'p2',
-        pandal: 'Banamalipur Club & Youth Union',
-        neighborhood: 'Banamalipur',
-        uploader: 'Saptarshi Sen',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Saptarshi&backgroundColor=c0aede',
-        imageUrl: '/images/agartala.jpg',
-        lat: 23.8335,
-        lng: 91.2915,
-        time: '24m ago',
-        likes: 860,
-        viewsCount: 5200,
-        views: '5.2k',
-        emoji: '🎆'
-      },
-      {
-        id: 'p3',
-        pandal: 'Battala Durga Puja',
-        neighborhood: 'Battala',
-        uploader: 'Priya Saha',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Priya&backgroundColor=ffdfbf',
-        imageUrl: '/pandal1.jpg',
-        lat: 23.8361,
-        lng: 91.2812,
-        time: '35m ago',
-        likes: 780,
-        viewsCount: 4820,
-        views: '4.8k',
-        emoji: '🪔'
-      },
-      {
-        id: 'p4',
-        pandal: 'Dhaleswar Netaji Play Center',
-        neighborhood: 'Dhaleswar',
-        uploader: 'Subhamita Das',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Subhamita&backgroundColor=ffd5dc',
-        imageUrl: '/images/agartala.jpg',
-        lat: 23.8310,
-        lng: 91.2965,
-        time: '42m ago',
-        likes: 670,
-        viewsCount: 4300,
-        views: '4.3k',
-        emoji: '🌟'
-      },
-      {
-        id: 'p5',
-        pandal: 'Ramnagar Road No. 2',
-        neighborhood: 'Ramnagar',
-        uploader: 'Arindam Ghosh',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Arindam&backgroundColor=b6e3f4',
-        imageUrl: '/pandal1.jpg',
-        lat: 23.8430,
-        lng: 91.2840,
-        time: '1h ago',
-        likes: 710,
-        viewsCount: 4120,
-        views: '4.1k',
-        emoji: '✨'
-      },
-      {
-        id: 'p6',
-        pandal: 'Shanti Para Youth Club',
-        neighborhood: 'Shantipara',
-        uploader: 'Tanmoy Banik',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Tanmoy&backgroundColor=ffd5dc',
-        imageUrl: '/images/agartala.jpg',
-        lat: 23.8375,
-        lng: 91.2905,
-        time: '1h ago',
-        likes: 590,
-        viewsCount: 3890,
-        views: '3.9k',
-        emoji: '🎊'
-      },
-      {
-        id: 'p7',
-        pandal: 'Melarmath Sarbajanin Mandap',
-        neighborhood: 'Melarmath',
-        uploader: 'Sneha Majumder',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Sneha&backgroundColor=ffdfbf',
-        imageUrl: '/pandal1.jpg',
-        lat: 23.8305,
-        lng: 91.2855,
-        time: '2h ago',
-        likes: 530,
-        viewsCount: 3740,
-        views: '3.7k',
-        emoji: '🕊️'
-      },
-      {
-        id: 'p8',
-        pandal: 'Kali Bari Puja Samiti',
-        neighborhood: 'Kali Bari',
-        uploader: 'Riya Das',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Riya&backgroundColor=c0aede',
-        imageUrl: '/images/agartala.jpg',
-        lat: 23.8295,
-        lng: 91.2940,
-        time: '2h ago',
-        likes: 620,
-        viewsCount: 3450,
-        views: '3.5k',
-        emoji: '🌺'
-      },
-      {
-        id: 'p9',
-        pandal: 'Abhoynagar Sarbojanin',
-        neighborhood: 'Abhoynagar',
-        uploader: 'Debu Paul',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Debu&backgroundColor=b6e3f4',
-        imageUrl: '/pandal1.jpg',
-        lat: 23.8400,
-        lng: 91.2950,
-        time: '3h ago',
-        likes: 480,
-        viewsCount: 3150,
-        views: '3.2k',
-        emoji: '🙏'
-      },
-      {
-        id: 'p10',
-        pandal: 'Badharghat Kalitola Club',
-        neighborhood: 'Badharghat',
-        uploader: 'Mousumi Sarkar',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Mousumi&backgroundColor=d1d4f9',
-        imageUrl: '/images/agartala.jpg',
-        lat: 23.8160,
-        lng: 91.2780,
-        time: '4h ago',
-        likes: 410,
-        viewsCount: 2980,
-        views: '3.0k',
-        emoji: '🏮'
-      },
-      {
-        id: 'p11',
-        pandal: 'Bordowali Milan Sangha',
-        neighborhood: 'Bordowali',
-        uploader: 'Kaushik Bhowmik',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Kaushik&backgroundColor=ffd5dc',
-        imageUrl: '/pandal1.jpg',
-        lat: 23.8190,
-        lng: 91.2850,
-        time: '5h ago',
-        likes: 370,
-        viewsCount: 2850,
-        views: '2.9k',
-        emoji: '🔱'
-      },
-      {
-        id: 'p12',
-        pandal: 'Motor Stand Puja Committee',
-        neighborhood: 'Krishnanagar',
-        uploader: 'Soham Dey',
-        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Soham&backgroundColor=ffd5dc',
-        imageUrl: '/images/agartala.jpg',
-        lat: 23.8270,
-        lng: 91.2820,
-        time: '5h ago',
-        likes: 390,
-        viewsCount: 2640,
-        views: '2.6k',
-        emoji: '🥁'
-      }
-    ];
+    /* ── Live Real-Time Puja Snaps State (Purged of mock/sample data) ── */
+    const AGARTALA_CENTER = { lat: 23.8315, lng: 91.2868 };
+    let snapsData = [];
 
     /* ── Dark Mode Map Styling Array for Snapchat aesthetic ── */
     const DARK_MAP_STYLE = [
@@ -1505,6 +1301,21 @@
       if (!listEl) return;
 
       listEl.innerHTML = '';
+
+      if (snapsData.length === 0) {
+        listEl.innerHTML = `
+          <div class="p-8 text-center glass-card rounded-2xl flex flex-col items-center justify-center space-y-2 border border-white/10 my-2">
+            <span class="text-3xl mb-1">🪔</span>
+            <h4 class="text-white font-bold text-sm">No Puja Snaps Yet</h4>
+            <p class="text-white/50 text-xs max-w-xs leading-relaxed">Be the first devotee to capture a pandal moment and broadcast it live to the Agartala map!</p>
+            <button onclick="document.getElementById('floating-camera')?.click()" class="mt-2 px-4 py-2 rounded-xl bg-gradient-to-r from-saffron to-puja-crimson text-white text-xs font-bold shadow-md shadow-saffron/20 active:scale-95 transition">
+              📸 Snap First Pandal
+            </button>
+          </div>
+        `;
+        return;
+      }
+
       snapsData.forEach(snap => {
         // Calculate proximity for reference
         const distKm = calculateHaversineDistance(
@@ -1512,24 +1323,29 @@
           snap.lat, snap.lng
         );
         const distStr = formatDistance(distKm);
+        const pandalTitle = snap.pandalName || snap.pandal || 'Durga Pandal';
+        const uploaderName = snap.userName || snap.uploader || 'Devotee';
+        const displayMedia = snap.mediaUrl || snap.imageUrl || 'logo.png';
+        const likes = snap.likesCount ?? snap.likes ?? 0;
+        const views = snap.views || formatCount(snap.viewsCount || 0);
 
         const item = document.createElement('div');
         item.className = 'glass-card rounded-2xl p-3 flex items-center gap-3.5 cursor-pointer hover:bg-white/10 active:scale-98 transition';
         item.innerHTML = `
           <div class="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border-2 border-saffron/60">
-            <img src="${snap.imageUrl}" alt="${snap.pandal}" class="w-full h-full object-cover">
-            <span class="absolute bottom-1 right-1 text-xs">${snap.emoji}</span>
+            <img src="${displayMedia}" alt="${pandalTitle}" class="w-full h-full object-cover">
+            <span class="absolute bottom-1 right-1 text-xs">🪔</span>
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">
-              <h4 class="text-white font-bold text-sm truncate">${snap.pandal}</h4>
-              <span class="text-white/40 text-[11px]">${snap.time}</span>
+              <h4 class="text-white font-bold text-sm truncate">${pandalTitle}</h4>
+              <span class="text-white/40 text-[11px]">${snap.time || 'Just now'}</span>
             </div>
-            <p class="text-white/60 text-xs truncate mt-0.5">${snap.neighborhood} • by ${snap.uploader}</p>
+            <p class="text-white/60 text-xs truncate mt-0.5">by ${uploaderName}</p>
             <div class="flex items-center gap-3 mt-1 text-[11px] text-white/40">
               <span class="text-saffron font-medium">📍 ${distStr}</span>
-              <span>❤️ ${snap.likes}</span>
-              <span>👁️ ${snap.views}</span>
+              <span>❤️ ${likes}</span>
+              <span>👁️ ${views}</span>
             </div>
           </div>
           <button class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40">
@@ -1555,6 +1371,20 @@
       if (!listEl) return;
       listEl.innerHTML = '';
 
+      if (snapsData.length === 0) {
+        listEl.innerHTML = `
+          <div class="p-8 text-center glass-card rounded-2xl flex flex-col items-center justify-center space-y-2 border border-white/10 my-2">
+            <span class="text-3xl mb-1">📍</span>
+            <h4 class="text-white font-bold text-sm">No Nearby Pandals Yet</h4>
+            <p class="text-white/50 text-xs max-w-xs leading-relaxed">Upload a pandal snap or browse the live map as devotees check in across Agartala.</p>
+            <button onclick="document.getElementById('floating-camera')?.click()" class="mt-2 px-4 py-2 rounded-xl bg-gradient-to-r from-saffron to-puja-crimson text-white text-xs font-bold shadow-md shadow-saffron/20 active:scale-95 transition">
+              📸 Snap Pandal
+            </button>
+          </div>
+        `;
+        return;
+      }
+
       // 1. Calculate physical distance for all pandals using Haversine formula
       const pandalsWithDistance = snapsData.map(snap => {
         const distKm = calculateHaversineDistance(
@@ -1562,8 +1392,10 @@
           snap.lat, snap.lng
         );
         // Interaction score: viewsCount + likes * 4
-        const popularityScore = (snap.viewsCount || 1000) + ((snap.likes || 100) * 4);
-        return { ...snap, distKm, popularityScore };
+        const likes = Number(snap.likesCount ?? snap.likes ?? 0);
+        const views = Number(snap.viewsCount ?? 0);
+        const popularityScore = views + (likes * 4);
+        return { ...snap, distKm, popularityScore, likes, viewsFormatted: snap.views || formatCount(views) };
       });
 
       // 2. Filter/prioritize pandals within proximity radius (or take closest candidate cluster)
@@ -1582,17 +1414,20 @@
       top10Nearby.forEach((snap, index) => {
         const distStr = formatDistance(snap.distKm);
         const rank = index + 1;
+        const pandalTitle = snap.pandalName || snap.pandal || 'Durga Pandal';
+        const displayMedia = snap.mediaUrl || snap.imageUrl || 'logo.png';
+        const uploaderName = snap.userName || snap.uploader || 'Devotee';
 
         // Dynamic popularity badge
         let popBadgeHtml = '';
         if (rank === 1) {
-          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-500/25 to-red-500/25 text-amber-300 border border-amber-500/40 shadow-sm flex items-center gap-1">🔥 #1 Trending • ${snap.views}</span>`;
+          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-500/25 to-red-500/25 text-amber-300 border border-amber-500/40 shadow-sm flex items-center gap-1">🔥 #1 Trending • ${snap.viewsFormatted}</span>`;
         } else if (rank === 2) {
-          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/35 flex items-center gap-1">⭐ #2 Popular • ${snap.views}</span>`;
+          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/35 flex items-center gap-1">⭐ #2 Popular • ${snap.viewsFormatted}</span>`;
         } else if (rank === 3) {
-          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/35 flex items-center gap-1">✨ #3 Top Rated • ${snap.views}</span>`;
+          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/35 flex items-center gap-1">✨ #3 Top Rated • ${snap.viewsFormatted}</span>`;
         } else {
-          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/80 border border-white/15 flex items-center gap-1">👁️ ${snap.views} views</span>`;
+          popBadgeHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/80 border border-white/15 flex items-center gap-1">👁️ ${snap.viewsFormatted} views</span>`;
         }
 
         const item = document.createElement('div');
@@ -1702,11 +1537,11 @@
       }
 
       storyTime.textContent = snap.time || 'Just now';
-      storyEmoji.textContent = snap.emoji || '🪔';
-      storyNeighborhood.textContent = `${snap.neighborhood || 'Agartala'}, Agartala`;
-      storyPandalTitle.textContent = snap.pandalName || snap.pandal;
-      storyLikesCount.textContent = snap.likes || 1;
-      storyViewsCount.textContent = snap.views || '1';
+      storyEmoji.textContent = '🪔';
+      storyNeighborhood.textContent = 'Agartala, Tripura';
+      storyPandalTitle.textContent = snap.pandalName || snap.pandal || 'Durga Pandal';
+      storyLikesCount.textContent = snap.likesCount ?? snap.likes ?? 0;
+      storyViewsCount.textContent = snap.views || formatCount(snap.viewsCount || 0);
 
       modal.classList.add('active');
 
@@ -1809,17 +1644,44 @@
     const placeholderContent = document.getElementById('placeholder-content');
     const btnSubmitSnap = document.getElementById('btn-submit-snap');
     const inputPandalName = document.getElementById('input-pandal-name');
-    const inputNeighborhood = document.getElementById('input-neighborhood');
-    const inputCategoryEmoji = document.getElementById('input-category-emoji');
-    const inputUploader = document.getElementById('input-uploader');
     const gpsStatusDot = document.getElementById('gps-status-dot');
     const gpsStatusText = document.getElementById('gps-status-text');
     const gpsStrategyBadge = document.getElementById('gps-strategy-badge');
     const gpsMethodDesc = document.getElementById('gps-method-desc');
 
     let capturedMediaData = null;
+    let selectedMediaBlobFile = null;
     let capturedMediaType = 'image';
     let currentUser = null;
+
+    /* ── Helper: Format View / Like Counts ── */
+    function formatCount(num) {
+      if (!num || num === 0) return '0';
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+      return String(num);
+    }
+
+    /* ── Helper: Format Firestore Timestamp ── */
+    function formatCreatedAt(ts) {
+      if (!ts) return 'Just now';
+      let date;
+      if (typeof ts.toDate === 'function') {
+        date = ts.toDate();
+      } else if (ts.seconds) {
+        date = new Date(ts.seconds * 1000);
+      } else if (typeof ts === 'string' || typeof ts === 'number') {
+        date = new Date(ts);
+      } else {
+        return 'Just now';
+      }
+      const diffMinutes = Math.floor((Date.now() - date.getTime()) / 60000);
+      if (diffMinutes < 1) return 'Just now';
+      if (diffMinutes < 60) return `${diffMinutes}m ago`;
+      const diffHours = Math.floor(diffMinutes / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays}d ago`;
+    }
 
     /* ── GOOGLE AUTHENTICATION SYSTEM ── */
     function updateAuthUI(user) {
@@ -1956,70 +1818,126 @@
       handleSignOut();
     });
 
-    /* ── Firestore Real-time Broadcast & Sync ── */
-    async function pushSnapToFirestore(newSnap) {
+    /* ── FIREBASE STORAGE UPLOAD HANDLER ── */
+    async function uploadMediaToStorage(file) {
+      if (firebaseStorage && isRealFirebaseConfig && file) {
+        try {
+          showToast('☁️ Uploading media to Firebase Storage...');
+          const ext = file.name ? file.name.split('.').pop() : (file.type.includes('video') ? 'mp4' : 'jpg');
+          const filename = `snaps/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          const snapStorageRef = storageRef(firebaseStorage, filename);
+          await uploadBytes(snapStorageRef, file);
+          const downloadUrl = await getDownloadURL(snapStorageRef);
+          console.log('✅ Uploaded to Firebase Storage:', downloadUrl);
+          return downloadUrl;
+        } catch (storageErr) {
+          console.warn('Firebase Storage upload notice (falling back to data URL):', storageErr);
+        }
+      }
+      return capturedMediaData || 'logo.png';
+    }
+
+    /* ── FIREBASE FIRESTORE REAL-TIME SCHEMA & SYNC ── */
+    async function pushSnapToFirestore(snapData) {
       if (firestoreDb && isRealFirebaseConfig) {
         try {
-          await addDoc(collection(firestoreDb, 'snaps'), {
-            userId: newSnap.userId,
-            userName: newSnap.userName,
-            userAvatar: newSnap.userAvatar,
-            mediaUrl: newSnap.mediaUrl,
-            mediaType: newSnap.mediaType,
-            pandalName: newSnap.pandalName,
-            neighborhood: newSnap.neighborhood,
-            coordinates: newSnap.coordinates,
-            emoji: newSnap.emoji,
-            likes: newSnap.likes,
-            viewsCount: newSnap.viewsCount,
-            timestamp: serverTimestamp()
+          const docRef = await addDoc(collection(firestoreDb, 'snaps'), {
+            userId: snapData.userId,
+            userName: snapData.userName,
+            userAvatar: snapData.userAvatar,
+            mediaUrl: snapData.mediaUrl,
+            mediaType: snapData.mediaType,
+            pandalName: snapData.pandalName,
+            lat: Number(snapData.lat),
+            lng: Number(snapData.lng),
+            viewsCount: Number(snapData.viewsCount || 0),
+            likesCount: Number(snapData.likesCount || 0),
+            createdAt: serverTimestamp()
           });
-          console.log('📡 Snap synced to shared Firestore database!');
+          console.log('📡 Snap synced to shared Firestore database with ID:', docRef.id);
+          return docRef.id;
         } catch (err) {
           console.warn('Firestore push notice:', err);
         }
       }
+      // Offline / local storage persistence fallback
+      saveLocalPersistedSnap(snapData);
+      return snapData.id;
+    }
+
+    function saveLocalPersistedSnap(newSnap) {
+      try {
+        const existing = JSON.parse(localStorage.getItem('puja_parikrama_snaps') || '[]');
+        existing.unshift(newSnap);
+        localStorage.setItem('puja_parikrama_snaps', JSON.stringify(existing.slice(0, 50)));
+      } catch (e) {
+        console.warn('Local storage write notice:', e);
+      }
+    }
+
+    function loadLocalPersistedSnaps() {
+      try {
+        const saved = localStorage.getItem('puja_parikrama_snaps');
+        if (saved) {
+          snapsData = JSON.parse(saved);
+        } else {
+          snapsData = [];
+        }
+        renderAllMapMarkers();
+        renderRecentSnapsList();
+        updateNearbyList();
+      } catch (e) {
+        console.warn('Local storage read notice:', e);
+        snapsData = [];
+      }
     }
 
     function initFirestoreRealtimeSync() {
-      if (!firestoreDb || !isRealFirebaseConfig) return;
+      if (!firestoreDb || !isRealFirebaseConfig) {
+        loadLocalPersistedSnaps();
+        return;
+      }
       try {
-        const q = query(collection(firestoreDb, 'snaps'), orderBy('timestamp', 'desc'));
+        const q = query(collection(firestoreDb, 'snaps'), orderBy('createdAt', 'desc'));
         onSnapshot(q, (snapshot) => {
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') {
-              const docData = change.doc.data();
-              const docId = change.doc.id;
-              if (!snapsData.some(s => s.id === docId || (s.userId === docData.userId && Math.abs(s.lat - docData.coordinates.lat) < 0.00001))) {
-                const incomingSnap = {
-                  id: docId,
-                  userId: docData.userId,
-                  userName: docData.userName,
-                  userAvatar: docData.userAvatar,
-                  mediaUrl: docData.mediaUrl,
-                  mediaType: docData.mediaType || 'image',
-                  pandalName: docData.pandalName,
-                  pandal: docData.pandalName,
-                  neighborhood: docData.neighborhood || 'Agartala',
-                  uploader: docData.userName,
-                  avatar: docData.userAvatar,
-                  imageUrl: docData.mediaUrl,
-                  lat: docData.coordinates.lat,
-                  lng: docData.coordinates.lng,
-                  coordinates: docData.coordinates,
-                  time: 'Just now',
-                  likes: docData.likes || 1,
-                  viewsCount: docData.viewsCount || 1,
-                  views: '1',
-                  emoji: docData.emoji || '🪔'
-                };
-                addDynamicPinAndSync(incomingSnap);
-              }
-            }
+          const incomingList = [];
+          snapshot.forEach((docSnap) => {
+            const d = docSnap.data();
+            incomingList.push({
+              id: docSnap.id,
+              userId: d.userId || '',
+              userName: d.userName || 'Devotee',
+              userAvatar: d.userAvatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=Devotee&backgroundColor=ffdfbf',
+              mediaUrl: d.mediaUrl || 'logo.png',
+              mediaType: d.mediaType || 'image',
+              pandalName: d.pandalName || 'Durga Pandal',
+              pandal: d.pandalName || 'Durga Pandal',
+              uploader: d.userName || 'Devotee',
+              avatar: d.userAvatar || 'logo.png',
+              imageUrl: d.mediaUrl || 'logo.png',
+              lat: Number(d.lat),
+              lng: Number(d.lng),
+              viewsCount: Number(d.viewsCount || 0),
+              likesCount: Number(d.likesCount || 0),
+              views: formatCount(d.viewsCount || 0),
+              likes: Number(d.likesCount || 0),
+              time: formatCreatedAt(d.createdAt),
+              createdAt: d.createdAt,
+              emoji: '🪔'
+            });
           });
+          snapsData = incomingList;
+          renderAllMapMarkers();
+          renderRecentSnapsList();
+          updateNearbyList();
+          console.log(`📡 Synced ${incomingList.length} live snaps from Firestore!`);
+        }, (err) => {
+          console.warn('Firestore onSnapshot listener error:', err);
+          loadLocalPersistedSnaps();
         });
       } catch (err) {
-        console.warn('Firestore real-time listener notice:', err);
+        console.warn('initFirestoreRealtimeSync error:', err);
+        loadLocalPersistedSnaps();
       }
     }
     initFirestoreRealtimeSync();
@@ -2176,39 +2094,10 @@
     }
 
     function renderPandalAutoMatch(matchResult, autoFillInputs = false) {
-      const banner = document.getElementById('pandal-match-banner');
-      const label = document.getElementById('pandal-match-label');
-      const sub = document.getElementById('pandal-match-sub');
-      const tag = document.getElementById('pandal-match-tag');
-      const icon = document.getElementById('pandal-match-icon');
-
-      if (!banner || !matchResult.nearest) return;
-
-      banner.classList.remove('hidden');
-      const nearest = matchResult.nearest;
-
-      if (matchResult.isClose) {
-        banner.className = 'rounded-xl p-2.5 border transition-all duration-200 flex items-center justify-between bg-emerald-500/15 border-emerald-500/40 shadow-sm';
-        icon.textContent = '🎉';
-        label.textContent = `Matched with: ${nearest.name}`;
-        sub.className = 'text-[10px] text-emerald-300 block font-medium';
-        sub.textContent = `${nearest.distText} from selected coordinates • Auto-linked`;
-        tag.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex-shrink-0';
-        tag.textContent = 'Auto-Matched';
-
-        if (autoFillInputs) {
-          inputPandalName.value = nearest.name;
-          inputNeighborhood.value = nearest.neighborhood;
-          if (nearest.emoji && inputCategoryEmoji) inputCategoryEmoji.value = nearest.emoji;
-        }
-      } else {
-        banner.className = 'rounded-xl p-2.5 border transition-all duration-200 flex items-center justify-between bg-amber-500/10 border-amber-500/30';
-        icon.textContent = '📍';
-        label.textContent = `Nearest Registered: ${nearest.name}`;
-        sub.className = 'text-[10px] text-amber-200/70 block';
-        sub.textContent = `${nearest.distText} from pin • Choose from list or type custom`;
-        tag.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex-shrink-0';
-        tag.textContent = 'Nearest Pandal';
+      if (!matchResult || !matchResult.nearest) return;
+      if (matchResult.isClose && autoFillInputs && !inputPandalName.value.trim()) {
+        inputPandalName.value = matchResult.nearest.name;
+        validateUploadForm();
       }
     }
 
@@ -2219,13 +2108,12 @@
       listEl.innerHTML = '';
       sortedList.forEach(p => {
         const item = document.createElement('div');
-        item.className = 'pandal-dropdown-item p-2 hover:bg-white/10 rounded-xl cursor-pointer flex items-center justify-between transition active:scale-98';
+        item.className = 'pandal-dropdown-item p-2.5 hover:bg-white/10 rounded-xl cursor-pointer flex items-center justify-between transition active:scale-98 border-b border-white/5 last:border-0';
         item.innerHTML = `
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="text-base flex-shrink-0">${p.emoji}</span>
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="text-base flex-shrink-0">${p.emoji || '🪔'}</span>
             <div class="min-w-0">
               <span class="text-white text-xs font-bold block truncate leading-tight">${p.name}</span>
-              <span class="text-white/40 text-[10px] block truncate">${p.neighborhood}</span>
             </div>
           </div>
           <span class="text-[10px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap ml-2">
@@ -2235,8 +2123,7 @@
 
         item.addEventListener('click', () => {
           inputPandalName.value = p.name;
-          inputNeighborhood.value = p.neighborhood;
-          if (p.emoji && inputCategoryEmoji) inputCategoryEmoji.value = p.emoji;
+          validateUploadForm();
 
           // Reposition pin to this verified pandal
           onCoordinatesUpdated(
@@ -2435,6 +2322,7 @@
     async function processPhotoSelection(file, source) {
       if (!file) return;
 
+      selectedMediaBlobFile = file;
       const isVideo = file.type.startsWith('video');
       capturedMediaType = isVideo ? 'video' : 'image';
 
@@ -2566,7 +2454,7 @@
       const matchResult = matchNearestPandal(submissionCoords);
       const filtered = query.length === 0 
         ? matchResult.allSorted 
-        : matchResult.allSorted.filter(p => p.name.toLowerCase().includes(query) || p.neighborhood.toLowerCase().includes(query));
+        : matchResult.allSorted.filter(p => p.name.toLowerCase().includes(query));
       renderPandalDropdownList(filtered);
       dropdownMenu?.classList.remove('hidden');
       validateUploadForm();
@@ -2581,14 +2469,16 @@
 
     function validateUploadForm() {
       const hasMedia = !!capturedMediaData;
-      const hasName = inputPandalName.value.trim().length > 0;
+      const hasName = inputPandalName && inputPandalName.value.trim().length > 0;
       btnSubmitSnap.disabled = !(hasMedia && hasName);
     }
 
     /* ── Dynamic Map Pin Creation & Instant Feed Sync ── */
     function addDynamicPinAndSync(newSnap) {
       // 1. Push new post to local state array
-      snapsData.unshift(newSnap);
+      if (!snapsData.some(s => s.id === newSnap.id)) {
+        snapsData.unshift(newSnap);
+      }
 
       // 2. Dynamically create and render custom HTML marker on Google Map
       if (map && window.SnapOverlayMarker) {
@@ -2616,45 +2506,57 @@
       }
 
       const pandalName = inputPandalName.value.trim();
-      const neighborhood = inputNeighborhood.value.trim() || 'Agartala';
-      const categoryEmoji = inputCategoryEmoji ? inputCategoryEmoji.value : '🪔';
+      if (!pandalName || !capturedMediaData) {
+        showToast('⚠️ Please select media and enter pandal name');
+        return;
+      }
 
-      const newSnap = {
-        id: 'snap-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      btnSubmitSnap.disabled = true;
+      btnSubmitSnap.innerHTML = `<span>⏳</span> Uploading to Storage & Syncing...`;
+
+      // 1. Upload media to Firebase Storage (or fallback to data URL)
+      const finalMediaUrl = await uploadMediaToStorage(selectedMediaBlobFile);
+
+      // 2. Exact Firestore Document Schema
+      const snapDocData = {
         userId: currentUser.uid,
-        userName: currentUser.displayName,
-        userAvatar: currentUser.photoURL,
-        mediaUrl: capturedMediaData || '/pandal1.jpg',
+        userName: currentUser.displayName || 'Devotee',
+        userAvatar: currentUser.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(currentUser.displayName || 'Devotee')}&backgroundColor=ffdfbf`,
+        mediaUrl: finalMediaUrl,
         mediaType: capturedMediaType || 'image',
         pandalName: pandalName,
-        pandal: pandalName,
-        neighborhood: neighborhood,
-        uploader: currentUser.displayName,
-        avatar: currentUser.photoURL,
-        imageUrl: capturedMediaData || '/pandal1.jpg',
-        coordinates: { lat: submissionCoords.lat, lng: submissionCoords.lng },
-        lat: submissionCoords.lat,
-        lng: submissionCoords.lng,
-        locationSource: currentStrategyBadgeText,
-        timestamp: new Date().toISOString(),
-        time: 'Just now',
-        likes: 1,
-        viewsCount: 1,
-        views: '1',
-        emoji: categoryEmoji
+        lat: Number(submissionCoords.lat),
+        lng: Number(submissionCoords.lng),
+        viewsCount: 0,
+        likesCount: 0,
+        createdAt: serverTimestamp()
       };
 
-      // 1. Push to shared Firestore collection
-      await pushSnapToFirestore(newSnap);
+      // 3. Push to Firestore collection 'snaps'
+      const docId = await pushSnapToFirestore(snapDocData);
 
-      // 2. Execute dynamic pin creation, map flight, and feed sync
-      addDynamicPinAndSync(newSnap);
+      // 4. If offline / demo mode, update local UI state immediately
+      if (!isRealFirebaseConfig) {
+        const localSnap = {
+          ...snapDocData,
+          id: docId || ('snap-' + Date.now()),
+          pandal: pandalName,
+          uploader: snapDocData.userName,
+          avatar: snapDocData.userAvatar,
+          imageUrl: finalMediaUrl,
+          time: 'Just now',
+          views: '0',
+          likes: 0,
+          emoji: '🪔'
+        };
+        addDynamicPinAndSync(localSnap);
+      }
 
-      // 3. Reset form & close modal
+      // 5. Reset form & close modal
       uploadModal.classList.remove('active');
       inputPandalName.value = '';
-      inputNeighborhood.value = '';
       capturedMediaData = null;
+      selectedMediaBlobFile = null;
       capturedMediaType = 'image';
       uploadPreviewImg.src = '';
       uploadPreviewImg.classList.add('hidden');
@@ -2664,10 +2566,10 @@
       }
       placeholderContent.classList.remove('hidden');
       document.getElementById('media-change-badge')?.classList.add('hidden');
-      document.getElementById('pandal-match-banner')?.classList.add('hidden');
       btnSubmitSnap.disabled = true;
+      btnSubmitSnap.innerHTML = `<span>🪔</span> Publish Snap to Live Map`;
 
-      showToast(`🎉 "${pandalName}" tagged with ${(currentUser.displayName || 'Devotee').split(' ')[0]} & broadcasted live!`);
+      showToast(`🎉 "${pandalName}" published live to the map!`);
     });
 
     /* ── Recenter Map Button (Pans to Live User Location) ── */

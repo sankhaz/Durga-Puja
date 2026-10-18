@@ -12,23 +12,28 @@ export interface AuthUser {
 
 export interface SnapPost {
   id: string
-  userId?: string
-  userName?: string
-  userAvatar?: string
-  mediaUrl?: string
-  mediaType?: 'image' | 'video'
-  pandal: string
-  neighborhood: string
-  uploader: string
-  avatar: string
-  imageUrl: string
+  userId: string
+  userName: string
+  userAvatar: string
+  mediaUrl: string
+  mediaType: 'image' | 'video'
+  pandalName: string
   lat: number
   lng: number
+  viewsCount: number
+  likesCount: number
+  createdAt: any
+  // Optional / helper aliases
+  pandal?: string
+  neighborhood?: string
+  uploader?: string
+  avatar?: string
+  imageUrl?: string
   coordinates?: { lat: number; lng: number }
-  timestamp: Date
-  likes: number
-  views: number
-  emoji: string
+  timestamp?: Date
+  likes?: number
+  views?: number
+  emoji?: string
 }
 
 declare global {
@@ -40,7 +45,7 @@ declare global {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Constants — demo seed data (Agartala pandals)
+   Constants & Master Pandals (For Search & Proximity Auto-Complete)
    ───────────────────────────────────────────────────────────────────────── */
 const AGARTALA_CENTER = { lat: 23.8315, lng: 91.2868 }
 const MAPS_API_KEY = 'AIzaSyAnnaozqfYaMR6oUS6ihqkbn1bwXJwcuR0'
@@ -77,88 +82,8 @@ function fmtDistanceMeters(meters: number): string {
   return meters < 1000 ? `${meters}m away` : `${(meters / 1000).toFixed(1)}km away`
 }
 
-const AVATARS = [
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=priya&backgroundColor=ffdfbf',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=riya&backgroundColor=c0aede',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=ananya&backgroundColor=d1d4f9',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=soham&backgroundColor=ffd5dc',
-  'https://api.dicebear.com/7.x/adventurer/svg?seed=debu&backgroundColor=b6e3f4',
-]
-
-const SEED_POSTS: SnapPost[] = [
-  {
-    id: 'post-1', pandal: 'Ujjayanta Palace Mandap', neighborhood: 'Palace Compound', uploader: 'Ananya Roy',
-    avatar: AVATARS[2], imageUrl: '/pandal1.jpg',
-    lat: 23.8350, lng: 91.2880, timestamp: new Date(Date.now() - 18 * 60000),
-    likes: 940, views: 5910, emoji: '👑',
-  },
-  {
-    id: 'post-2', pandal: 'Banamalipur Club & Youth Union', neighborhood: 'Banamalipur', uploader: 'Saptarshi Sen',
-    avatar: AVATARS[1], imageUrl: '/images/agartala.jpg',
-    lat: 23.8335, lng: 91.2915, timestamp: new Date(Date.now() - 24 * 60000),
-    likes: 860, views: 5200, emoji: '🎆',
-  },
-  {
-    id: 'post-3', pandal: 'Battala Durga Puja', neighborhood: 'Battala', uploader: 'Priya Saha',
-    avatar: AVATARS[0], imageUrl: '/pandal1.jpg',
-    lat: 23.8361, lng: 91.2812, timestamp: new Date(Date.now() - 35 * 60000),
-    likes: 780, views: 4820, emoji: '🪔',
-  },
-  {
-    id: 'post-4', pandal: 'Dhaleswar Netaji Play Center', neighborhood: 'Dhaleswar', uploader: 'Subhamita Das',
-    avatar: AVATARS[3], imageUrl: '/images/agartala.jpg',
-    lat: 23.8310, lng: 91.2965, timestamp: new Date(Date.now() - 42 * 60000),
-    likes: 670, views: 4300, emoji: '🌟',
-  },
-  {
-    id: 'post-5', pandal: 'Ramnagar Road No. 2', neighborhood: 'Ramnagar', uploader: 'Arindam Ghosh',
-    avatar: AVATARS[4], imageUrl: '/pandal1.jpg',
-    lat: 23.8430, lng: 91.2840, timestamp: new Date(Date.now() - 60 * 60000),
-    likes: 710, views: 4120, emoji: '✨',
-  },
-  {
-    id: 'post-6', pandal: 'Shanti Para Youth Club', neighborhood: 'Shantipara', uploader: 'Tanmoy Banik',
-    avatar: AVATARS[3], imageUrl: '/images/agartala.jpg',
-    lat: 23.8375, lng: 91.2905, timestamp: new Date(Date.now() - 75 * 60000),
-    likes: 590, views: 3890, emoji: '🎊',
-  },
-  {
-    id: 'post-7', pandal: 'Melarmath Sarbajanin Mandap', neighborhood: 'Melarmath', uploader: 'Sneha Majumder',
-    avatar: AVATARS[0], imageUrl: '/pandal1.jpg',
-    lat: 23.8305, lng: 91.2855, timestamp: new Date(Date.now() - 2 * 3600000),
-    likes: 530, views: 3740, emoji: '🕊️',
-  },
-  {
-    id: 'post-8', pandal: 'Kali Bari Puja Samiti', neighborhood: 'Kali Bari', uploader: 'Riya Das',
-    avatar: AVATARS[1], imageUrl: '/images/agartala.jpg',
-    lat: 23.8295, lng: 91.2940, timestamp: new Date(Date.now() - 2.5 * 3600000),
-    likes: 620, views: 3450, emoji: '🌺',
-  },
-  {
-    id: 'post-9', pandal: 'Abhoynagar Sarbojanin', neighborhood: 'Abhoynagar', uploader: 'Debu Paul',
-    avatar: AVATARS[4], imageUrl: '/pandal1.jpg',
-    lat: 23.8400, lng: 91.2950, timestamp: new Date(Date.now() - 3 * 3600000),
-    likes: 480, views: 3150, emoji: '🙏',
-  },
-  {
-    id: 'post-10', pandal: 'Badharghat Kalitola Club', neighborhood: 'Badharghat', uploader: 'Mousumi Sarkar',
-    avatar: AVATARS[2], imageUrl: '/images/agartala.jpg',
-    lat: 23.8160, lng: 91.2780, timestamp: new Date(Date.now() - 4 * 3600000),
-    likes: 410, views: 2980, emoji: '🏮',
-  },
-  {
-    id: 'post-11', pandal: 'Bordowali Milan Sangha', neighborhood: 'Bordowali', uploader: 'Kaushik Bhowmik',
-    avatar: AVATARS[3], imageUrl: '/pandal1.jpg',
-    lat: 23.8190, lng: 91.2850, timestamp: new Date(Date.now() - 5 * 3600000),
-    likes: 370, views: 2850, emoji: '🔱',
-  },
-  {
-    id: 'post-12', pandal: 'Motor Stand Puja Committee', neighborhood: 'Krishnanagar', uploader: 'Soham Dey',
-    avatar: AVATARS[3], imageUrl: '/images/agartala.jpg',
-    lat: 23.8270, lng: 91.2820, timestamp: new Date(Date.now() - 6 * 3600000),
-    likes: 390, views: 2640, emoji: '🥁',
-  },
-]
+// Purged mock/sample data: initialized empty for real-time Firestore sync
+const SEED_POSTS: SnapPost[] = []
 
 /* ─────────────────────────────────────────────────────────────────────────
    Dark mode map styles (Snapchat-style night theme)
@@ -368,7 +293,6 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
   const [preview, setPreview] = useState<string | null>(null)
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image')
   const [pandalName, setPandalName] = useState('')
-  const [neighborhood, setNeighborhood] = useState('')
   const [coords, setCoords] = useState<{ lat: number; lng: number }>(AGARTALA_CENTER)
   const [locationSource, setLocationSource] = useState<'exif' | 'live_gps' | 'city_center' | 'custom'>('live_gps')
   const [sourceBadge, setSourceBadge] = useState({ text: '📡 Live Device GPS', cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' })
@@ -378,7 +302,7 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
   const [submitting, setSubmitting] = useState(false)
 
   const reset = () => {
-    setPreview(null); setPandalName(''); setNeighborhood('')
+    setPreview(null); setPandalName('')
     setCoords(AGARTALA_CENTER); setStep('capture'); setSubmitting(false)
     setShowDropdown(false); setSearchFilter('')
   }
@@ -438,15 +362,14 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
       setSourceBadge({ text: '📍 Agartala Center', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' })
     }
 
-    // Auto-match nearest pandal
+    // Auto-match nearest pandal silently
     const sorted = AGARTALA_MASTER_PANDALS.map(p => ({
       ...p,
       distance: calcHaversineMeters(detectedCoords!.lat, detectedCoords!.lng, p.lat, p.lng)
     })).sort((a, b) => a.distance - b.distance)
 
-    if (sorted[0] && sorted[0].distance <= 500) {
+    if (sorted[0] && sorted[0].distance <= 500 && !pandalName.trim()) {
       setPandalName(sorted[0].name)
-      setNeighborhood(sorted[0].neighborhood)
     }
   }
 
@@ -462,9 +385,6 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
       return { ...p, distance: dist, distText: fmtDistanceMeters(dist) }
     }).sort((a, b) => a.distance - b.distance)
   }, [coords])
-
-  const nearestPandal = pandalsWithProximity[0]
-  const isAutoMatched = nearestPandal && nearestPandal.distance <= 500
 
   const filteredPandals = useMemo(() => {
     const q = (pandalName || searchFilter).trim().toLowerCase()
@@ -486,15 +406,17 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
         userAvatar: currentUser.photoURL,
         mediaUrl: preview,
         mediaType: mediaType,
+        pandalName: pandalName.trim(),
         pandal: pandalName.trim(),
-        neighborhood: neighborhood.trim() || 'Agartala',
         uploader: currentUser.displayName,
         avatar: currentUser.photoURL,
         imageUrl: preview,
         lat: coords.lat,
         lng: coords.lng,
-        coordinates: { lat: coords.lat, lng: coords.lng },
-        emoji: nearestPandal?.emoji || '🪔',
+        viewsCount: 0,
+        likesCount: 0,
+        createdAt: new Date(),
+        emoji: '🪔',
       })
       reset()
       onClose()
@@ -593,26 +515,6 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
             </div>
           </div>
 
-          {/* Pandal Auto-Match Banner */}
-          {nearestPandal && (
-            <div className={`rounded-xl p-2.5 border flex items-center justify-between ${isAutoMatched ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-base">{isAutoMatched ? '🎉' : '📍'}</span>
-                <div className="min-w-0">
-                  <span className="text-white text-xs font-bold block truncate">
-                    {isAutoMatched ? `Matched with: ${nearestPandal.name}` : `Nearest: ${nearestPandal.name}`}
-                  </span>
-                  <span className={`text-[10px] block ${isAutoMatched ? 'text-emerald-300' : 'text-amber-200/70'}`}>
-                    {nearestPandal.distText} away • {isAutoMatched ? 'Auto-linked' : 'Select from dropdown'}
-                  </span>
-                </div>
-              </div>
-              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${isAutoMatched ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}>
-                {isAutoMatched ? 'Auto-Matched' : 'Suggested'}
-              </span>
-            </div>
-          )}
-
           {/* Searchable Pandal Name & Dropdown */}
           <div className="relative">
             <label className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-1.5 block">
@@ -645,7 +547,6 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
                     key={p.name}
                     onClick={() => {
                       setPandalName(p.name)
-                      setNeighborhood(p.neighborhood)
                       setCoords({ lat: p.lat, lng: p.lng })
                       setLocationSource('custom')
                       setSourceBadge({ text: '🏛️ Pandal Coordinates', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' })
@@ -667,19 +568,6 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Neighborhood input */}
-          <div>
-            <label className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-1.5 block">Neighborhood</label>
-            <input
-              id="neighborhood-input"
-              type="text"
-              value={neighborhood}
-              onChange={e => setNeighborhood(e.target.value)}
-              placeholder="e.g. Usha Bazar, Banamalipur"
-              className="w-full py-3 px-3.5 rounded-xl text-white text-sm outline-none bg-white/5 border border-white/15 focus:border-amber-400"
-            />
           </div>
 
           {/* Interactive Mini-Map Preview Card (Confirmation) */}
@@ -755,6 +643,13 @@ function UploadModal({ visible, currentUser, onRequireAuth, onClose, onSubmit }:
    Feed Card
    ───────────────────────────────────────────────────────────────────────── */
 function FeedCard({ post, onClick }: { post: SnapPost; onClick: () => void }) {
+  const displayMedia = post.mediaUrl || post.imageUrl || '/logo.png'
+  const displayAvatar = post.userAvatar || post.avatar || '/logo.png'
+  const displayName = post.userName || post.uploader || 'Devotee'
+  const pandalTitle = post.pandalName || post.pandal || 'Durga Pandal'
+  const likes = post.likesCount ?? post.likes ?? 0
+  const views = post.viewsCount ?? post.views ?? 0
+
   return (
     <button
       id={`feed-card-${post.id}`}
@@ -765,20 +660,22 @@ function FeedCard({ post, onClick }: { post: SnapPost; onClick: () => void }) {
       {/* Thumbnail */}
       <div className="relative flex-shrink-0">
         <div className="w-14 h-14 rounded-2xl overflow-hidden" style={{ border: '2px solid rgba(255,107,0,0.5)' }}>
-          <img src={post.imageUrl} alt={post.pandal} className="w-full h-full object-cover" />
+          <img src={displayMedia} alt={pandalTitle} className="w-full h-full object-cover" />
         </div>
-        <img src={post.avatar} alt={post.uploader}
+        <img src={displayAvatar} alt={displayName}
           className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full border-2"
           style={{ borderColor: '#0a0a0f' }} />
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-white font-semibold text-sm truncate">{post.emoji} {post.pandal}</p>
-        <p className="text-white/50 text-xs truncate">{post.neighborhood} · {timeAgo(post.timestamp)}</p>
+        <p className="text-white font-semibold text-sm truncate">{post.emoji || '🪔'} {pandalTitle}</p>
+        <p className="text-white/50 text-xs truncate">
+          {post.neighborhood ? `${post.neighborhood} · ` : ''}{post.timestamp ? timeAgo(post.timestamp) : 'Just now'}
+        </p>
         <div className="flex items-center gap-3 mt-1">
-          <span className="text-white/40 text-xs">❤️ {post.likes}</span>
-          <span className="text-white/40 text-xs">👁 {post.views.toLocaleString()}</span>
+          <span className="text-white/40 text-xs">❤️ {likes}</span>
+          <span className="text-white/40 text-xs">👁 {views.toLocaleString()}</span>
         </div>
       </div>
 
@@ -989,6 +886,18 @@ export default function App() {
     const newPost: SnapPost = {
       ...data,
       id: uid(),
+      pandalName: data.pandalName || data.pandal || 'Durga Pandal',
+      pandal: data.pandalName || data.pandal || 'Durga Pandal',
+      mediaUrl: data.mediaUrl || data.imageUrl || '/logo.png',
+      imageUrl: data.mediaUrl || data.imageUrl || '/logo.png',
+      userName: data.userName || data.uploader || 'Devotee',
+      uploader: data.userName || data.uploader || 'Devotee',
+      userAvatar: data.userAvatar || data.avatar || '/logo.png',
+      avatar: data.userAvatar || data.avatar || '/logo.png',
+      mediaType: data.mediaType || 'image',
+      viewsCount: 0,
+      likesCount: 0,
+      createdAt: new Date(),
       likes: 0,
       views: 1,
       timestamp: new Date(),
@@ -1264,7 +1173,21 @@ export default function App() {
             className="overflow-y-auto no-scrollbar px-4 pb-6"
             style={{ maxHeight: 'calc(70vh - 130px)' }}
           >
-            {activeTab === 'recent' ? (
+            {posts.length === 0 ? (
+              <div className="p-8 text-center glass-card rounded-2xl flex flex-col items-center justify-center space-y-2 border border-white/10 my-4">
+                <span className="text-3xl mb-1">🪔</span>
+                <h4 className="text-white font-bold text-sm">No Puja Snaps Yet</h4>
+                <p className="text-white/50 text-xs max-w-xs leading-relaxed">
+                  Be the first devotee to capture a pandal moment and broadcast it live to the Agartala map!
+                </p>
+                <button
+                  onClick={() => setUploadVisible(true)}
+                  className="mt-2 px-4 py-2 rounded-xl bg-gradient-to-r from-saffron to-puja-crimson text-white text-xs font-bold shadow-md shadow-saffron/20 active:scale-95 transition"
+                >
+                  📸 Snap First Pandal
+                </button>
+              </div>
+            ) : activeTab === 'recent' ? (
               <div className="flex flex-col gap-2">
                 {posts.map(post => (
                   <FeedCard
